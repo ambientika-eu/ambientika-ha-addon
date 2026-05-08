@@ -1,0 +1,6 @@
+{
+  "name": "Ambientika MQTT Bridge",
+  "description": "MQTT bridge for Ambientika ventilation units – Home Assistant Add-on",
+  "homeassistant": "2023.1.0",
+  "render_readme": true
+}
