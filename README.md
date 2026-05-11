@@ -1,7 +1,7 @@
 # Ambientika Add-ons for Home Assistant
 
 <p align="center">
-  <img src="https://www.ambientika.eu/wp-content/uploads/ambientika-logo.png" alt="Ambientika by Südwind" width="300"/>
+  <img src="https://raw.githubusercontent.com/ambientika-eu/ambientika-ha-addon/main/logo.png" alt="Ambientika by Südwind" width="300"/>
 </p>
 
 <p align="center">
