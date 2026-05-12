@@ -2,7 +2,9 @@
 """
 Ambientika MQTT Bridge – Home Assistant Add-on  v1.1.2
 =======================================================
-Connects the Ambientika Cloud API to a local MQTT broker
+Connects the Ambientika Cloud API to a local MQTT broker22
+23
+
 with full Home Assistant MQTT Auto-Discovery support.
 
 API library : ambientika_py 0.0.5  (wingertge/ambientika-py)
@@ -24,7 +26,7 @@ from ambientika_py import (
     DeviceMode,
     FanSpeed,
     HumidityLevel,
-    LightSensorLevel,
+    ,
     OperatingMode,
     authenticate,
 )
@@ -78,14 +80,14 @@ def fan_to_str(fan: FanSpeed) -> str:
 def hum_to_str(hum: HumidityLevel) -> str:
     return hum.name  # "Dry", "Normal", "Moist"
 
-def light_to_str(lvl: LightSensorLevel) -> str:
+def light_to_str(lvl: ) -> str:
     return lvl.name  # "NotAvailable", "Off", "Low", "Medium"
 
 # All valid string values for the HA select entities
 ALL_MODES   = [m.name for m in OperatingMode]
 ALL_FANS    = [f.name for f in FanSpeed]
 ALL_HUMS    = [h.name for h in HumidityLevel]
-ALL_LIGHTS  = [l.name for l in LightSensorLevel]
+ALL_LIGHTS  = [l.name for l in ]
 
 # ---------------------------------------------------------------------------
 # MQTT topic helpers
@@ -288,7 +290,7 @@ class AmbientikaHABridge:
                 "operating_mode":    OperatingMode[current["operating_mode"]],
                 "fan_speed":         FanSpeed[current["fan_speed"]],
                 "humidity_level":    HumidityLevel[current["humidity_level"]],
-                "light_sensor_level": LightSensorLevel[current["light_sensor_level"]],
+                "light_sensor_level": [current["light_sensor_level"]],
             }
 
             if attr == "operating_mode":
@@ -298,7 +300,7 @@ class AmbientikaHABridge:
             elif attr == "humidity_level":
                 mode["humidity_level"] = HumidityLevel[value]
             elif attr == "light_sensor_level":
-                mode["light_sensor_level"] = LightSensorLevel[value]
+                mode["light_sensor_level"] = [value]
             else:
                 logger.warning("Unknown command attribute: %s", attr)
                 return
