@@ -1,2 +1,2 @@
-ambientika_py>=0.1.0
+ambientika_py>=0.0.5
 paho-mqtt>=2.0.0
