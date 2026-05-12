@@ -1,2 +1,14 @@
-ambientika_py>=0.0.5
+# Ambientika MQTT Bridge – Python dependencies
+# Last verified: 2026-05 with ambientika_py 0.0.5
+
+# Ambientika Cloud API wrapper (reverse-engineered, latest stable)
+ambientika_py==0.0.5
+
+# Required by ambientika_py (railway-oriented programming)
+returns>=0.19.0
+
+# MQTT client
 paho-mqtt>=2.0.0
+
+# HTTP client used by ambientika_py
+aiohttp>=3.9.0
