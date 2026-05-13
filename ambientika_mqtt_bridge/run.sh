@@ -6,7 +6,7 @@ AMBIENTIKA_PASSWORD=$(bashio::config 'ambientika_password')
 MQTT_HOST=$(bashio::config 'mqtt_host')
 MQTT_PORT=$(bashio::config 'mqtt_port')
 MQTT_USERNAME=$(bashio::config 'mqtt_username')
-MQTT_PASSWORD_MQTT=$(bashio::config 'mqtt_password')
+MQTT_PASSWORD=$(bashio::config 'mqtt_password')
 MQTT_TOPIC_PREFIX=$(bashio::config 'mqtt_topic_prefix')
 POLL_INTERVAL=$(bashio::config 'poll_interval')
 LOG_LEVEL=$(bashio::config 'log_level')
@@ -22,7 +22,7 @@ export AMBIENTIKA_PASSWORD
 export MQTT_HOST
 export MQTT_PORT
 export MQTT_USERNAME
-export MQTT_PASSWORD_MQTT
+export MQTT_PASSWORD
 export MQTT_TOPIC_PREFIX
 export POLL_INTERVAL
 export LOG_LEVEL
