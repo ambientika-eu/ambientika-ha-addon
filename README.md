@@ -16,10 +16,10 @@
 ---
 
 <p align="center">
-  <img src="neuracell-x-logo.png" alt="NeuraCell-X - AI Neural Control System (patented)" width="480">
+  <img src="neuracell-x-logo.png" alt="NeuraCell-X - AI Neural Control System (patent-pending)" width="480">
 </p>
 
-<h3 align="center">Powered by NeuraCell-X&reg; &mdash; the patented AI Neural Control System</h3>
+<h3 align="center">Powered by NeuraCell-X&reg; &mdash; the patent-pending AI Neural Control System</h3>
 
 <p align="center">
   <b>Active radon protection</b> &nbsp;&middot;&nbsp; <b>Intelligent dew-point ventilation</b> &nbsp;&middot;&nbsp; <b>Whole-home, fully automatic</b>
@@ -28,7 +28,7 @@
 <p align="center">
   <img alt="Radon" src="https://img.shields.io/badge/Radon-active%20protection-38e1c8">
   <img alt="Dew point" src="https://img.shields.io/badge/Taupunkt-dew--point%20control-3ac6e6">
-  <img alt="Patented" src="https://img.shields.io/badge/NeuraCell--X-patent%20pending-6aa9ff">
+  <img alt="Patent-pending" src="https://img.shields.io/badge/NeuraCell--X-patent%20pending-6aa9ff">
   <img alt="TUV" src="https://img.shields.io/badge/hardware-T%C3%9CV%20gepr%C3%BCft-4caf50">
 </p>
 
@@ -49,11 +49,11 @@ Connects your Ambientika ventilation units to Home Assistant via MQTT with full 
 | **Binary Sensors** | Filter alarm, defrost active |
 | **Discovery** | MQTT Auto-Discovery (devices appear automatically in HA) |
 | **Devices** | Supports up to 20 units per installation |
-| **NeuraCell-X®** | Patented radon protection + dew-point control (see below) |
+| **NeuraCell-X®** | Patent-pending radon protection + dew-point control (see below) |
 
 ---
 
-## NeuraCell-X&reg; &mdash; patented radon & dew-point protection
+## NeuraCell-X&reg; &mdash; patent-pending radon & dew-point protection
 
 ![NeuraCell-X](neuracell-x-logo.png)
 
