@@ -755,6 +755,11 @@ class AmbientikaBridge:
         if rc == 0:
             log.info("Connected to MQTT broker.")
             self._subscribe_all(client)
+            # Publish discovery + NeuraCell-X status here (after CONNACK) so the
+            # retained messages are never lost to a not-yet-connected socket.
+            # Re-runs on every reconnect, which also refreshes HA auto-discovery.
+            self._publish_discovery()
+            self.publish_neuracell_state()
         else:
             log.error("MQTT connection failed (rc=%s).", rc)
 
@@ -972,10 +977,8 @@ class AmbientikaBridge:
         await self._login()
         await self._discover_devices()
         self._mqtt_connect()
-        if self.client is not None:
-            self._subscribe_all(self.client)
-        self._publish_discovery()
-        self.publish_neuracell_state()
+        # Subscriptions, discovery and NeuraCell-X status are (re)published from
+        # the on_connect callback once the CONNACK is received (see _on_mqtt_connect).
 
         log.info("Starting poll loop (every %ss) ...", self.cfg.poll_interval)
         if self.cfg.neuracell_enabled:
