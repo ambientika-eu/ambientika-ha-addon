@@ -38,6 +38,19 @@ The bridge publishes MQTT Auto-Discovery messages so your Ambientika devices app
 
 **Settings > Devices & Services > MQTT > Devices**
 
+### Distinguishing the internal state in SMART mode
+
+The `Mode` control shows the *set* macro-mode. In the automatic modes
+(`Smart` / `Auto`) that value stays `Smart`, even though the unit internally
+switches between concrete functions — heat recovery vs. free cooling
+(`MasterSlaveFlow`), night mode, etc.
+
+To make the actually-running function distinguishable in SMART mode, the bridge
+also publishes a read-only diagnostic sensor **"Active Operating Mode (SMART)"**
+(`last_operating_mode`), which reflects the concrete mode the unit reports. The
+`Fan Speed` sensor already reports the real running speed, so together they let
+you see exactly what SMART is doing at any moment.
+
 ## Support
 
 - GitHub: https://github.com/ambientika-eu/ambientika-mqtt-bridge

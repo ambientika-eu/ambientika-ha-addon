@@ -392,6 +392,27 @@ def build_discovery_configs(cfg: BridgeConfig, serial: str, device_name: str):
             p["icon"] = icon
         entities.append((f"{base}/sensor/{serial}_{key}/config", p))
 
+    # --- Read-only diagnostic: concrete operating mode the unit is executing ---
+    # In the automatic macro-modes (Smart / Auto) the "operating_mode" the user
+    # sets stays "Smart", while the device internally switches between concrete
+    # functions (heat recovery vs. free cooling / MasterSlaveFlow, night mode).
+    # The Ambientika status packet carries a *second* mode field
+    # ("lastOperatingMode") that reflects that concrete internal state. The
+    # regular select/sensor above only shows the *set* macro-mode, so on its own
+    # SMART is not distinguishable. This diagnostic sensor exposes the concrete
+    # mode so the actually-running function IS distinguishable in SMART mode.
+    # (fan_speed already reports the real running speed, so it is covered.)
+    entities.append((f"{base}/sensor/{serial}_last_operating_mode/config", {
+        "name": "Active Operating Mode (SMART)",
+        "unique_id": f"ambientika_{serial}_last_operating_mode",
+        "state_topic": state,
+        "value_template": "{{ value_json.last_operating_mode }}",
+        "availability_topic": avail,
+        "device": device_info,
+        "icon": "mdi:fan-auto",
+        "entity_category": "diagnostic",
+    }))
+
     bin_defs = [
         ("humidity_alarm", "Humidity Alarm", "moisture"),
         ("night_alarm", "Night Alarm", "problem"),
@@ -940,6 +961,7 @@ class AmbientikaBridge:
                     s = res.unwrap()
                     payload = {
                         "operating_mode": s["operating_mode"].name,
+                        "last_operating_mode": s["last_operating_mode"].name,
                         "fan_speed": s["fan_speed"].name,
                         "humidity_level": s["humidity_level"].name,
                         "light_sensor_level": s["light_sensor_level"].name,
