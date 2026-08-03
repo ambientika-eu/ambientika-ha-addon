@@ -1,6 +1,6 @@
 name: "Ambientika MQTT Bridge"
 description: "MQTT bridge for Ambientika ventilation units. Connects the Ambientika Cloud API to your local MQTT broker with Home Assistant Auto-Discovery support. Includes NeuraCell-X radon protection + dew-point control (Taupunktsteuerung)."
-version: "1.5.1"
+version: "1.6.0"
 slug: "ambientika_mqtt_bridge"
 init: false
 arch:
@@ -33,10 +33,17 @@ options:
   radon_threshold: 300
   radon_hysteresis: 50
   radon_protection_fan: "Low"
+  radon_source: "signal"
+  radon_device_serial: ""
+  radon_device_alarm_field: "air_quality"
+  radon_device_alarm_values: "Bad,Poor,Very Bad,Alarm,Alert"
   # --- Dew-point control (Taupunktsteuerung) - radon has priority ---
   dewpoint_enabled: true
   dewpoint_source: "signal"
   dewpoint_block_topic: "ambientika/dewpoint/block"
+  dewpoint_block_devices: ""
+  dewpoint_device_serial: ""
+  dewpoint_device_block_modes: "Off"
   dewpoint_indoor_temp_topic: "ambientika/dewpoint/indoor_temp"
   dewpoint_indoor_humidity_topic: "ambientika/dewpoint/indoor_humidity"
   dewpoint_outdoor_temp_topic: "ambientika/dewpoint/outdoor_temp"
@@ -61,10 +68,17 @@ schema:
   radon_threshold: int(50,1000)
   radon_hysteresis: int(0,500)
   radon_protection_fan: list(Low|Medium|High)
+  radon_source: list(signal|device)
+  radon_device_serial: str?
+  radon_device_alarm_field: str?
+  radon_device_alarm_values: str?
   # --- Dew-point control ---
   dewpoint_enabled: bool
-  dewpoint_source: list(signal|computed)
+  dewpoint_source: list(signal|computed|device)
   dewpoint_block_topic: str?
+  dewpoint_block_devices: str?
+  dewpoint_device_serial: str?
+  dewpoint_device_block_modes: str?
   dewpoint_indoor_temp_topic: str?
   dewpoint_indoor_humidity_topic: str?
   dewpoint_outdoor_temp_topic: str?
