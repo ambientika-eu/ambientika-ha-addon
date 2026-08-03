@@ -1,6 +1,10 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
+# Re-declare build arg so it is available after FROM.
+ARG BUILD_VERSION
+ENV BRIDGE_VERSION=${BUILD_VERSION}
+
 LABEL \
   io.hass.name="Ambientika MQTT Bridge" \
   io.hass.description="MQTT bridge for Ambientika ventilation units" \
