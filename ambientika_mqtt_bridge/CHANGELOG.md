@@ -3,6 +3,22 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.14
+- Filter-Reset meldet bei Slave-Einheiten jetzt den tatsächlichen Sachverhalt: Der Zähler
+  einer Slave-Einheit lässt sich über die Cloud nicht löschen, weil die Rückstellung vom
+  Master der Zone ausgeführt wird und nur dessen eigenen Zähler betrifft. Statt auf einen
+  späteren Poll zu vertrösten, weist die Bridge im Klartext darauf hin, dass die Rückstellung
+  direkt an der Einheit nötig ist. Bei Master- und Einzelgeräten wird der Erfolg weiterhin
+  am echten Gerätestatus geprüft.
+- Neue Option „slave_filter_soft_reset" (Standard: aus): Ist sie aktiv, vermerkt die Bridge
+  einen Reset an einer Slave-Einheit als Wartungsquittung. `filter_status_num` zeigt die
+  gewartete Einheit dann wieder grün, während der rohe Gerätewert unverändert bleibt und
+  weiterhin unter `filters_status` sowie im neuen Feld `filter_status_raw_num` sichtbar ist.
+  Damit lösen Warnregeln wieder korrekt aus, ohne dass eine gewartete Einheit dauerhaft auf
+  Rot hängt.
+- Neue Option „filter_ack_ttl_days" (Standard: 90): Gültigkeitsdauer der Wartungsquittung
+  in Tagen.
+
 ## 1.6.13
 Behebt einen Ausfall im Dauerbetrieb: Nach dem Token-Refresh (etwa alle sechs Stunden) stellte die Bridge das Polling dauerhaft ein. Beim Re-Auth werden die Geräte jetzt wieder korrekt mit dem frischen Cloud-Token verbunden, sodass das Polling nahtlos weiterläuft.
 
