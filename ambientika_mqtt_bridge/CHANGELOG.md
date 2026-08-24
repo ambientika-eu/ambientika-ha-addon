@@ -3,6 +3,25 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.17
+- Mehrere Einstellungen in einer Automation funktionieren jetzt. Bisher füllte
+  jedes Kommando die Attribute, die es nicht selbst setzt, aus dem gerade
+  gelesenen Cloud-Status — und die Cloud kannte die eben gesendete Änderung noch
+  nicht. Wer Modus und Lüfterstufe nacheinander setzte, bei dem schrieb das
+  zweite Kommando den alten Modus zurück. Kommandos für dasselbe Gerät werden
+  jetzt innerhalb eines kurzen Fensters gesammelt und in einem einzigen Aufruf
+  angewandt. Das halbiert nebenbei die Cloud-Aufrufe.
+- Neues Kommando-Topic „<prefix>/<seriennummer>/set" nimmt ein JSON-Objekt mit
+  mehreren Attributen entgegen, zum Beispiel
+  {"operating_mode": "MasterSlaveFlow", "fan_speed": "High"}. Die Kurznamen
+  „mode", „fanSpeed", „humidityLevel" und „lightSensorLevel" werden ebenfalls
+  verstanden. Ein ungültiger Wert verwirft das ganze Kommando, ein unbekannter
+  Schlüssel wird mit einer Meldung übersprungen.
+- Das Sammelfenster lässt sich über die Umgebungsvariable COMMAND_COALESCE_MS
+  einstellen (Standard 800 Millisekunden, 0 schaltet es ab).
+- Die MQTT-Dokumentation im Projekt-README beschrieb Topics und Nutzlasten, die
+  es so nie gab. Sie ist jetzt aus dem laufenden Betrieb heraus korrigiert.
+
 ## 1.6.16
 - Die Wartungsquittung wirkt jetzt auch auf den Text-Sensor „Filter Status". Bisher
   meldete er weiterhin „Bad", während die Zahlenwerte bereits grün waren — wer den
