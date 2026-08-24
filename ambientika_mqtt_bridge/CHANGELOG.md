@@ -3,6 +3,20 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.18
+- Neue Datei DOCS.md: Home Assistant zeigt im Reiter „Dokumentation" ausschließlich
+  diese Datei an. Bisher gab es nur eine README.md, die der Supervisor dort nicht
+  darstellt — im Add-on selbst stand also gar keine Anleitung. Die neue Datei nennt
+  die Voraussetzungen, erklärt die Zugangsdaten und beschreibt alle Optionen.
+- Klarstellung: Die einzutragenden Zugangsdaten sind dieselbe E-Mail-Adresse und
+  dasselbe Passwort wie in der Ambientika-App. Ein eigenes Konto für die Bridge
+  gibt es nicht. Die Fehlermeldung sagt das jetzt auch selbst.
+- MQTT-Fehler werden im Klartext gemeldet statt nur als Zahl. „rc=5" heißt, dass
+  der Broker die Anmeldung abgelehnt hat, und verweist auf mqtt_username und
+  mqtt_password — das offizielle Mosquitto-Add-on lässt keine anonymen
+  Verbindungen zu. Die Optionsbeschreibung nannte diese Felder bisher „optional",
+  was für Mosquitto nicht zutrifft.
+
 ## 1.6.17
 - Mehrere Einstellungen in einer Automation funktionieren jetzt. Bisher füllte
   jedes Kommando die Attribute, die es nicht selbst setzt, aus dem gerade
