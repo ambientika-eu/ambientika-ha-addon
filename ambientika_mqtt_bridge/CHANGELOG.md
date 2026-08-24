@@ -3,6 +3,19 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.16
+- Die Wartungsquittung wirkt jetzt auch auf den Text-Sensor „Filter Status". Bisher
+  meldete er weiterhin „Bad", während die Zahlenwerte bereits grün waren — wer den
+  lesbaren Klartext im Dashboard nutzt, sah die Quittung also nicht. Die Hauptfelder
+  „filters_status" und „filter_status_num" zeigen nun beide den quittierten Wert.
+- Neuer Sensor „Filter Status raw" (`filters_status_raw`) mit dem unveränderten
+  Gerätewert als Text — passend zum bereits vorhandenen `filter_status_raw_num`.
+  Bei ausgeschalteter Quittung, also im Standard, sind Haupt- und Rohwert identisch.
+- Der Diagnosesensor „Filter Reset Status" kennt den eigenen Zustand „acknowledged".
+  Bisher stand dort nach einer Quittung „unconfirmed", was neben einer grünen Anzeige
+  widersprüchlich wirkte. „unconfirmed" bedeutet jetzt wieder das, was es sagt: der
+  Reset ist weder durchgekommen noch vermerkt worden.
+
 ## 1.6.15
 - Filter-Reset greift jetzt auch bei Filterstatus „Medium" (gelb). Bisher stieg
   die Bridge bei allem außer Rot vorzeitig aus und meldete „nothing to do", ohne
