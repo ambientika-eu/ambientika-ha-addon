@@ -3,6 +3,17 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.15
+- Filter-Reset greift jetzt auch bei Filterstatus „Medium" (gelb). Bisher stieg
+  die Bridge bei allem außer Rot vorzeitig aus und meldete „nothing to do", ohne
+  überhaupt einen Reset zu senden — wer den Filter vor dem Alarm reinigt, drückte
+  ins Leere. Übersprungen wird nur noch ein Zähler, der bereits auf „Good" steht.
+- Die Erfolgsprüfung misst jetzt die tatsächliche Verbesserung des Zählers statt
+  nur „nicht mehr rot". Ein Reset aus „Medium" heraus wird dadurch nicht mehr
+  fälschlich als bestätigt gemeldet, wenn sich nichts bewegt hat.
+- Die Wartungsquittung für Slave-Einheiten gilt entsprechend für jeden fälligen
+  Zähler, also für Gelb wie für Rot.
+
 ## 1.6.14
 - Filter-Reset meldet bei Slave-Einheiten jetzt den tatsächlichen Sachverhalt: Der Zähler
   einer Slave-Einheit lässt sich über die Cloud nicht löschen, weil die Rückstellung vom
