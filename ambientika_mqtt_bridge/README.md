@@ -39,6 +39,7 @@ After installation, configure the add-on via the **Configuration** tab:
 | `poll_interval` | Polling interval in seconds (10-300) | `30` |
 | `availability_failure_threshold` | Consecutive failed reads before a unit is shown unavailable | `3` |
 | `log_level` | Log verbosity | `INFO` |
+| `command_coalesce_ms` | Commands for the same unit within this window are applied in one call (`0` = immediately) | `800` |
 | `slave_filter_soft_reset` | Maintenance acknowledgement for Slave filter counters | `false` |
 | `filter_ack_ttl_days` | How long an acknowledgement stays valid | `90` |
 
