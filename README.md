@@ -102,17 +102,34 @@ Configure it in the add-on options / `config.yaml`: `radon_threshold`, `radon_pr
 
 ## Configuration
 
+### Prerequisites
+
+- An **MQTT broker**. If you have none, install the official **Mosquitto broker**
+  add-on first and start it.
+- An **Ambientika account** — the same e-mail address and password you use in the
+  Ambientika app. There is no separate account for the bridge.
+
 | Option | Default | Description |
 |---|---|---|
-| `ambientika_username` | – | Your Ambientika account e-mail |
-| `ambientika_password` | – | Your Ambientika account password |
+| `ambientika_username` | – | E-mail address of your Ambientika app account |
+| `ambientika_password` | – | Password of your Ambientika app account |
 | `mqtt_host` | `core-mosquitto` | MQTT broker hostname |
 | `mqtt_port` | `1883` | MQTT broker port |
-| `mqtt_username` | – | MQTT username (optional) |
-| `mqtt_password` | – | MQTT password (optional) |
+| `mqtt_username` | – | Broker user — **required** for the Mosquitto add-on, which refuses anonymous connections |
+| `mqtt_password` | – | Broker password |
 | `mqtt_topic_prefix` | `ambientika` | MQTT topic prefix |
 | `poll_interval` | `30` | Polling interval in seconds (10–300) |
+| `availability_failure_threshold` | `3` | Consecutive failed reads before a unit is shown unavailable |
 | `log_level` | `INFO` | Log level (DEBUG, INFO, WARNING, ERROR) |
+| `slave_filter_soft_reset` | `false` | Maintenance acknowledgement for Slave filter counters |
+| `filter_ack_ttl_days` | `90` | How long an acknowledgement stays valid |
+
+Leaving `mqtt_username` and `mqtt_password` empty is the most common setup
+mistake: the log then shows `MQTT connection failed (rc=5)`.
+
+The full user documentation is in
+[`ambientika_mqtt_bridge/DOCS.md`](ambientika_mqtt_bridge/DOCS.md); Home Assistant
+shows it in the add-on's **Documentation** tab.
 
 ---
 
