@@ -121,6 +121,7 @@ Configure it in the add-on options / `config.yaml`: `radon_threshold`, `radon_pr
 | `poll_interval` | `30` | Polling interval in seconds (10–300) |
 | `availability_failure_threshold` | `3` | Consecutive failed reads before a unit is shown unavailable |
 | `log_level` | `INFO` | Log level (DEBUG, INFO, WARNING, ERROR) |
+| `command_coalesce_ms` | `800` | Commands for the same unit within this window are applied in one call (`0` = immediately) |
 | `slave_filter_soft_reset` | `false` | Maintenance acknowledgement for Slave filter counters |
 | `filter_ack_ttl_days` | `90` | How long an acknowledgement stays valid |
 
