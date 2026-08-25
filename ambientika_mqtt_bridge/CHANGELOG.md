@@ -3,6 +3,16 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.19
+- Das Sammelfenster für Kommandos lässt sich jetzt in den Add-on-Optionen
+  einstellen: „command_coalesce_ms", Standard 800 Millisekunden, 0 führt jedes
+  Kommando sofort aus. Bisher war es nur über eine Umgebungsvariable erreichbar
+  und damit im Add-on gar nicht änderbar — wen die knappe Sekunde Verzögerung
+  beim Schalten stört, der hatte keine Möglichkeit.
+- Die README im Wurzelverzeichnis des Repositories führte den MQTT-Benutzer
+  weiterhin als „optional" und kannte drei Optionen nicht. Sie ist jetzt auf
+  demselben Stand wie die Dokumentation im Add-on.
+
 ## 1.6.18
 - Neue Datei DOCS.md: Home Assistant zeigt im Reiter „Dokumentation" ausschließlich
   diese Datei an. Bisher gab es nur eine README.md, die der Supervisor dort nicht
