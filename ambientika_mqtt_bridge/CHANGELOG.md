@@ -3,6 +3,16 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.20
+- Temperatur und Luftfeuchte werden jetzt als Messwerte gemeldet
+  („state_class: measurement"). Home Assistant legt damit eine Langzeitstatistik
+  an. Bisher fehlte diese Angabe, die Werte verschwanden mit der
+  Recorder-Aufbewahrung nach rund zehn Tagen und ließen sich weder im
+  Statistik-Diagramm noch über die Heizperiode auswerten.
+- Die beiden Passwortfelder in den Add-on-Optionen sind jetzt als Passwort
+  deklariert. Home Assistant stellt sie damit verdeckt dar, statt sie wie bisher
+  im Klartext anzuzeigen.
+
 ## 1.6.19
 - Das Sammelfenster für Kommandos lässt sich jetzt in den Add-on-Optionen
   einstellen: „command_coalesce_ms", Standard 800 Millisekunden, 0 führt jedes
