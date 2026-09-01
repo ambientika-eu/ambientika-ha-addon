@@ -147,3 +147,13 @@ shows it in the add-on's **Documentation** tab.
 This add-on is developed and maintained by **Südwind GmbH**, the manufacturer of Ambientika ventilation systems.
 
 © Südwind GmbH – [www.ambientika.eu](https://www.ambientika.eu)
+
+---
+
+## Humidity and dew-point control
+
+The folder feuchteregelung holds a ready-made Home Assistant package for humidity- and dew-point-based ventilation control. It is generated from a short configuration file, so ten units can be covered without copy-paste errors, and it builds on the entities this add-on creates.
+
+The point that matters: ventilation only dries a room when the outdoor air holds less water in absolute terms. Relative humidity is the wrong measure for that decision — outside at 28 °C and 60 % there are 16.3 g of water per m³, inside at 22 °C and 60 % only 11.6. The package therefore works with absolute humidity and dew point throughout, and applies a per-unit sensor offset taken from your own comparison measurement.
+
+Installation, the calibration procedure and the reasoning behind it are described in feuchteregelung/README.md. 56 tests, no hardware required.
