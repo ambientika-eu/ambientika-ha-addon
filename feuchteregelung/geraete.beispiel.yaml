@@ -1,0 +1,76 @@
+# Konfiguration für den Paketgenerator.
+#
+# Eine Kopie davon als geraete.yaml anlegen, an die eigene Anlage anpassen und
+#   python3 generate_package.py
+# ausführen. Ergebnis ist ambientika.yaml für den packages-Ordner.
+
+aussen:
+  # Außentemperatur und -feuchte. Ein eigener Sensor am Haus ist einer
+  # Wetterdienst-Vorhersage klar vorzuziehen: Die Regelung entscheidet anhand
+  # der Luft, die tatsächlich angesaugt wird, nicht anhand der am Flughafen.
+  temperatur: sensor.aussen_temperatur
+  feuchte: sensor.aussen_luftfeuchtigkeit
+
+einstellungen:
+  # Ab dieser relativen Feuchte im Raum wird entfeuchtet.
+  feuchte_schwelle: 62
+
+  # Schalthysterese in g/m³ absoluter Feuchte. Lüften wird nur freigegeben,
+  # wenn die Außenluft um mindestens diesen Betrag trockener ist. Ohne Marge
+  # schaltet die Anlage am Umschaltpunkt hin und her — bei einer Lüftung
+  # hörbar, und jeder Schaltvorgang erzeugt einen Bestätigungston.
+  trocknungs_marge: 0.8
+
+  # Nachtfenster. In diesem Zeitraum wird in Räumen mit nachtruhe: true
+  # nicht geschaltet.
+  nacht_beginn: "22:00:00"
+  nacht_ende: "06:30:00"
+
+  # Lüfterstufe beim Entfeuchten (0 = niedrig, 70 = mittel, 100 = hoch).
+  entfeuchtungs_stufe: 70
+
+  # Die Namen der Betriebsmodi, wie sie in der select-Entität stehen. Prüfen
+  # unter Entwicklerwerkzeuge -> Zustände: die Attribute der Modus-Entität
+  # zeigen die zulässigen Werte unter "options". Ein hier eingetragener Wert,
+  # den die Entität nicht kennt, lässt die Automation mit einem Fehler
+  # abbrechen — ohne dass am Gerät etwas passiert.
+  modus_entfeuchten: HRV
+  modus_normal: ECO
+
+geraete:
+  # offset_temperatur / offset_feuchte: eigene Messreihe gegen ein
+  # Referenzgerät im selben Raum, dann Differenz eintragen. Die Werte unten
+  # stammen aus dem Vergleich Büro (Gerät 26,0 °C / 46 % gegen zwei
+  # Referenzen im Mittel 22,95 °C / 58,5 %) und gelten NUR für dieses Gerät.
+  # Jedes Gerät braucht seine eigene Messung — der Versatz hängt am
+  # Betriebszustand und ist nicht übertragbar.
+
+  - name: Büro
+    slug: buero
+    modus: select.ambientika_buero_mode
+    stufe: number.ambientika_buero_fan_speed
+    temperatur: sensor.ambientika_buero_temperature
+    feuchte: sensor.ambientika_buero_humidity
+    offset_temperatur: -3.05
+    offset_feuchte: 12.5
+    nachtruhe: false
+
+  - name: Schlafzimmer
+    slug: schlafzimmer
+    modus: select.ambientika_schlafzimmer_mode
+    stufe: number.ambientika_schlafzimmer_fan_speed
+    temperatur: sensor.ambientika_schlafzimmer_temperature
+    feuchte: sensor.ambientika_schlafzimmer_humidity
+    offset_temperatur: 0.0      # noch nicht vermessen
+    offset_feuchte: 0.0
+    nachtruhe: true             # nachts kein Schalten, kein Bestätigungston
+
+  - name: Bad OG
+    slug: bad_og
+    modus: select.ambientika_bad_og_mode
+    stufe: number.ambientika_bad_og_fan_speed
+    temperatur: sensor.ambientika_bad_og_temperature
+    feuchte: sensor.ambientika_bad_og_humidity
+    offset_temperatur: 0.0
+    offset_feuchte: 0.0
+    nachtruhe: false
