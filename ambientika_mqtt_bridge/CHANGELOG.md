@@ -3,6 +3,9 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.21
+- Die Installationsanleitung nannte den Menüpunkt „Einstellungen → Add-ons → Add-on Store". Home Assistant hat ihn mit Version 2026.2 umbenannt: Er heißt dort „Apps", und der Store öffnet sich über die Schaltfläche zum Installieren auf dieser Seite. README und Dokumentation nennen jetzt den aktuellen Weg und den alten in Klammern. Danke für den Hinweis.
+
 ## 1.6.20
 - Temperatur und Luftfeuchte werden jetzt als Messwerte gemeldet
   („state_class: measurement"). Home Assistant legt damit eine Langzeitstatistik
