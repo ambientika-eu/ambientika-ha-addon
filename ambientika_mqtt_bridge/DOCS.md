@@ -9,7 +9,7 @@ in to your Ambientika account to reach the units.
 You need two things:
 
 1. **An MQTT broker.** If you have none, install the official **Mosquitto broker**
-   add-on first (Settings → Add-ons → Add-on Store → Mosquitto broker) and start it.
+   app first (Settings → Apps → Install app → Mosquitto broker; before HA 2026.2: Settings → Add-ons → Add-on Store) and start it.
 2. **Your Ambientika account.** That is the same e-mail address and password you
    use to sign in to the Ambientika app. There is no separate account for the
    bridge, and nothing to register.
