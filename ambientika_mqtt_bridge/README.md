@@ -6,7 +6,7 @@ This Home Assistant OS (HAOS) Add-on connects your Ambientika ventilation units 
 
 ### Method 1: Add Repository to Home Assistant (Recommended)
 
-1. In Home Assistant, go to **Settings > Add-ons > Add-on Store**
+1. In Home Assistant, go to **Settings > Apps** and click **Install app** (before HA 2026.2: **Settings > Add-ons > Add-on Store**)
 2. Click the **three-dot menu** (top right) > **Repositories**
 3. Add this URL:
 ```
