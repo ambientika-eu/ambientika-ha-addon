@@ -83,7 +83,7 @@ Configure it in the add-on options / `config.yaml`: `radon_threshold`, `radon_pr
 
 ## Installation
 
-1. In Home Assistant, go to **Settings → Add-ons → Add-on Store**
+1. In Home Assistant, go to **Settings → Apps** and click **Install app** (before HA 2026.2: **Settings → Add-ons → Add-on Store**)
 2. Click the three-dot menu (top right) → **Repositories**
 3. Add this URL:
    ```
