@@ -50,9 +50,18 @@ Then save and start the add-on. Your units appear under
 
 ### NeuraCell-X (radon protection and dew-point control)
 
-Twenty-one further options starting with `radon_` and `dewpoint_` configure the
+Thirty further options starting with `radon_` and `dewpoint_` configure the
 radon and dew-point protection. They only matter if you have the matching
-hardware, and the defaults are safe to leave alone. The full list with an
+hardware, and the defaults are safe to leave alone. The Ambientika radon meter
+(`radon/<id>/state`) and the Ambientika Taupunktsteuerung (`dew-point/<id>/state`,
+`ventilating`) are read directly with the defaults, nothing to configure. The
+sensors *Radon Meter Connected* and *Dew Point Controller Connected* show whether
+the two devices are still talking to the broker: their Last Will counts at once,
+a radon meter silent for longer than `radon_meter_timeout` (30 min) counts as
+disconnected as well, also after an add-on restart (the meters seen so far are
+remembered on the broker). A third-party dew-point controller needs
+`dewpoint_availability_topic` or `dewpoint_signal_timeout` for that (with
+`dewpoint_source: device` it follows the cloud reads instead). The full list with an
 explanation of each is in the
 [project README](https://github.com/ambientika-eu/ambientika-mqtt-bridge#neuracell-x--patent-pending-radon--dew-point-protection).
 
@@ -75,12 +84,40 @@ serviced unit then reads green, while the unchanged device value stays visible:
 The diagnostic sensor *Filter Reset Status* reports `confirmed` (the counter
 really cleared), `acknowledged` (recorded by the bridge) or `unconfirmed`.
 
+An acknowledgement ends for exactly two reasons, and both are written to the log:
+`filter_ack_ttl_days` has run out, or the unit itself reports `Good` for ten polls
+in a row (its filter was reset at the device). A single poll with an unknown or
+briefly green value no longer removes it. Up to 1.6.21 one such poll was enough,
+silently, so an acknowledgement could vanish long before its time.
+
+## Mode changes on Master/Slave groups
+
+The cloud answers a mode change with OK as soon as it has accepted the call, not
+when the unit has carried it out. The log line `change_mode OK ... (accepted by
+the cloud)` therefore only says that much. The bridge then watches the following
+polls: `operating mode ... confirmed` means the unit has really switched. If it
+still reports a different mode after three minutes, a warning says so.
+
+In a coupled zone a Slave takes its mode from the **Master** over the local WLAN,
+so set the mode on the Master. If a Slave keeps a different mode than its Master,
+its link to the Master is interrupted; the warning for a Slave names its Master
+and what to check (2.4 GHz on every access point, WLAN devices allowed to talk to
+each other).
+
 ## What SMART is currently doing
 
 The `Mode` control shows the macro mode you selected. In `Smart` and `Auto` it
 stays on that value even though the unit switches between concrete functions on
 its own. The read-only sensor **Active Operating Mode (SMART)** shows the
 function actually running, and **Fan Speed** shows the real speed.
+
+**Fan Speed** can show `Night` or `Turbo`: the unit chose that step itself. You
+can read these values but not set them. A command that names one (for example a
+scene that restores a snapshotted `Turbo`) or that does not name the speed at all
+(a mode change alone) never sends them back: the bridge uses the last speed the
+cloud accepted for that unit, or `Low` for `Night` and `High` for `Turbo` if it
+never saw one, and writes a line about it to the log. If you want a specific
+speed, name it in the command.
 
 ## Setting several values in one automation
 

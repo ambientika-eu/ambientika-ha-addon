@@ -1,6 +1,6 @@
 name: "Ambientika MQTT Bridge"
 description: "MQTT bridge for Ambientika ventilation units. Connects the Ambientika Cloud API to your local MQTT broker with Home Assistant Auto-Discovery support. Includes NeuraCell-X radon protection + dew-point control (Taupunktsteuerung)."
-version: "1.6.21"
+version: "1.6.22"
 slug: "ambientika_mqtt_bridge"
 init: false
 arch:
@@ -30,6 +30,9 @@ options:
   neuracell_enabled: true
   radon_topic: "ambientika/radon/value"
   radon_alarm_topic: "ambientika/radon/alarm"
+  radon_meter_topic: "radon/+/state"
+  radon_value_key: "mittelwert"
+  radon_meter_timeout: 30
   radon_threshold: 300
   radon_hysteresis: 50
   radon_protection_fan: "Low"
@@ -41,6 +44,7 @@ options:
   dewpoint_enabled: true
   dewpoint_source: "signal"
   dewpoint_block_topic: "ambientika/dewpoint/block"
+  dewpoint_block_key: ""
   dewpoint_block_devices: ""
   dewpoint_device_serial: ""
   dewpoint_device_block_modes: "Off"
@@ -50,6 +54,11 @@ options:
   dewpoint_outdoor_humidity_topic: "ambientika/dewpoint/outdoor_humidity"
   dewpoint_margin: 1.0
   dewpoint_hysteresis: 0.5
+  dewpoint_availability_topic: ""
+  dewpoint_signal_timeout: 0
+  dewpoint_lost_action: "keep"
+  dewpoint_controller_topic: "dew-point/+/state"
+  dewpoint_controller_key: "ventilating"
   # --- Kommandos zusammenfassen (0 = sofort ausfuehren) ---
   command_coalesce_ms: 800
   # --- Filter-Wartungsquittung fuer Slave-Einheiten ---
@@ -70,6 +79,9 @@ schema:
   neuracell_enabled: bool
   radon_topic: str
   radon_alarm_topic: str?
+  radon_meter_topic: str?
+  radon_value_key: str?
+  radon_meter_timeout: int(0,1440)?
   radon_threshold: int(50,1000)
   radon_hysteresis: int(0,500)
   radon_protection_fan: list(Low|Medium|High)
@@ -81,6 +93,7 @@ schema:
   dewpoint_enabled: bool
   dewpoint_source: list(signal|computed|device)
   dewpoint_block_topic: str?
+  dewpoint_block_key: str?
   dewpoint_block_devices: str?
   dewpoint_device_serial: str?
   dewpoint_device_block_modes: str?
@@ -90,6 +103,11 @@ schema:
   dewpoint_outdoor_humidity_topic: str?
   dewpoint_margin: float
   dewpoint_hysteresis: float
+  dewpoint_availability_topic: str?
+  dewpoint_signal_timeout: int(0,1440)?
+  dewpoint_lost_action: list(keep|release|block)?
+  dewpoint_controller_topic: str?
+  dewpoint_controller_key: str?
   # --- Kommandos zusammenfassen ---
   command_coalesce_ms: int(0,10000)
   # --- Filter-Wartungsquittung ---

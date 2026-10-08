@@ -3,6 +3,41 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.22
+- Die Wartungsquittung für Slave-Einheiten („slave_filter_soft_reset") verschwindet
+  nicht mehr vorzeitig. Bisher genügte ein einziger Abruf, in dem das Gerät einen
+  unbekannten oder kurz grünen Filterwert meldete, und die Quittung war endgültig
+  gelöscht — ohne Eintrag im Log. So konnte sie nach wenigen Wochen statt nach 90 Tagen
+  weg sein. Jetzt endet sie nur noch, wenn „filter_ack_ttl_days" abgelaufen ist oder
+  das Gerät selbst zehn Abrufe in Folge „Good" meldet (Filter direkt am Gerät
+  zurückgesetzt). Beides steht mit Grund im Log. Ein unbekannter Wert lässt die
+  Quittung stehen und wird einmal protokolliert. Eine bereits verschwundene Quittung
+  bitte einmal neu setzen.
+- Moduswechsel werden nachgeprüft. „change_mode OK" hieß bisher nur, dass die Cloud
+  den Aufruf angenommen hat, nicht dass das Gerät umgeschaltet hat. Die Zeile lautet
+  jetzt „change_mode OK … (accepted by the cloud)". Die Bridge beobachtet die folgenden
+  Abrufe und meldet „operating mode … confirmed", sobald das Gerät den Modus zeigt,
+  oder nach drei Minuten eine Warnung mit dem tatsächlichen Modus. Bei einem Slave
+  nennt die Warnung den Master der Zone: Ein Slave übernimmt seinen Modus über das
+  WLAN vom Master, der Modus gehört deshalb an den Master. Behält ein Slave einen
+  anderen Modus als sein Master, ist seine Verbindung zum Master unterbrochen.
+- Übernommen aus der Bridge (1.4.22 bis 1.4.29), bisher nur im Hauptrepository:
+  - Lüfterstufen „Night" und „Turbo", die das Gerät selbst wählt, werden nie mehr an
+    die Cloud zurückgeschickt. Ein Moduswechsel bei einem Gerät auf „Turbo" endete
+    bisher mit „HTTP 500 … unsigned byte".
+  - NeuraCell-X: Radon hat Vorrang vor der Taupunktsperre, Rückkehr in den vorherigen
+    Modus übersteht Neustart und Update, Befehle und Schutzwechsel laufen je Gerät
+    nacheinander.
+  - Das Ambientika Radon-Messgerät (radon/<id>/state) und die Ambientika
+    Taupunktsteuerung (dew-point/<id>/state) werden direkt gelesen. Neue Sensoren
+    „Radon Meter Connected" und „Dew Point Controller Connected"; die NeuraCell-X-
+    Sensoren stehen auf „nicht verfügbar", solange das Add-on nicht läuft.
+  - Neue Optionen: radon_meter_topic, radon_value_key, radon_meter_timeout,
+    dewpoint_block_key, dewpoint_availability_topic, dewpoint_signal_timeout,
+    dewpoint_lost_action, dewpoint_controller_topic, dewpoint_controller_key. Die
+    Standardwerte entsprechen dem bisherigen Verhalten der Bridge, es ist nichts
+    einzustellen.
+
 ## 1.6.21
 - Die Installationsanleitung nannte den Menüpunkt „Einstellungen → Add-ons → Add-on Store". Home Assistant hat ihn mit Version 2026.2 umbenannt: Er heißt dort „Apps", und der Store öffnet sich über die Schaltfläche zum Installieren auf dieser Seite. README und Dokumentation nennen jetzt den aktuellen Weg und den alten in Klammern. Danke für den Hinweis.
 
