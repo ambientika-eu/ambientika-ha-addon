@@ -3,6 +3,17 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.23
+- Nachkontrolle zu 1.6.22. „Dauerhaft grün" heißt für die Wartungsquittung jetzt:
+  mindestens zehn Abrufe in Folge und mindestens zehn Minuten. Zehn Abrufe allein
+  waren bei einem Abrufintervall von 10 s nur 100 s — ein neu startender Slave, der
+  kurz einen Standardstatus meldet, hätte die Quittung weiter löschen können.
+- Die Modusprüfung nach einem Befehl ist vom Statusabruf getrennt: Ein Fehler darin
+  kann nie als fehlgeschlagener Abruf zählen oder den Status unterdrücken.
+- Zusätzlicher Test durch den echten Abrufpfad mit dem gemeldeten Fall (ein einzelner
+  unbekannter Filterwert zwischen lauter „Bad"): Die Quittung bleibt, der Status bleibt
+  grün. Auf dem alten Stand nachgestellt war sie danach weg.
+
 ## 1.6.22
 - Die Wartungsquittung für Slave-Einheiten („slave_filter_soft_reset") verschwindet
   nicht mehr vorzeitig. Bisher genügte ein einziger Abruf, in dem das Gerät einen
