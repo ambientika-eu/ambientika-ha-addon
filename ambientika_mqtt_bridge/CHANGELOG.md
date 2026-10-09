@@ -3,6 +3,43 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.24
+- Modus von Slave-Einheiten: Ein gekoppelter Slave läuft mit dem Master seiner
+  Zone, sein eigenes Modusfeld gibt nicht wieder, wie er lüftet - ein Slave kann
+  „Surveillance" melden und trotzdem im Takt des Masters mit Wärmerückgewinnung
+  arbeiten. Wie die Ambientika-App, die je Zone nur den Master zeigt, zeigt „Mode"
+  eines Slaves jetzt den Modus seines Masters. Der eigene Wert des Geräts steht
+  daneben in den neuen Sensoren „Mode raw" und „Mode raw (num)". Master werden je
+  Durchlauf zuerst abgefragt. Unter NeuraCell-X-Schutz oder wenn der Master länger
+  nicht gelesen wurde, wird der eigene Wert gezeigt. Weicht der eigene Wert ab,
+  steht das einmal je Änderung im Log. Der Master einer Zone wird nur noch im
+  selben Haus gesucht (mehrere Häuser im Konto haben jeweils eine Zone 0), und
+  die Rollen kommen aus dem Status, den jedes Gerät selbst meldet: Umkoppeln
+  oder Zurücksetzen in der App wird ohne Neustart nachvollzogen, ein
+  zurückgesetztes Gerät mit altem Zonen-Index ist kein Slave. Für Automationen:
+  „Mode" und „Mode (num)" eines Slaves folgen jetzt dem Master; ein auf dem
+  Slave gewählter Modus geht weiterhin an dieses Gerät, die Anzeige zeigt beim
+  nächsten Abruf wieder den Master - Modi gehören auf den Master.
+- Korrektur zu 1.6.22: Behält ein Slave einen anderen Modus als sein Master, ist
+  das kein Zeichen einer unterbrochenen Verbindung. Die Warnung nach einem
+  Moduswechsel sagt das nicht mehr.
+- Unplausible Messwerte werden nicht mehr veröffentlicht. Feuchte außerhalb
+  1-100 % und Temperatur außerhalb -40 bis 85 °C fallen weg, ebenso ein einzelner
+  Sturz der Feuchte unter 20 %, wenn kurz davor keine trockene Luft gemessen
+  wurde (z. B. 6 % zwischen 55 und 70 %). Anstiege, Duschspitzen und der
+  Wechseltakt bleiben unberührt; bei trockener Winterluft wird nur der erste
+  trockene Wert nach einer langen feuchten Phase um einen Abruf verzögert. Ein
+  innerhalb von zwei Minuten mehrfach gelesenes Statuspaket (die Cloud hält das
+  letzte Paket des Geräts) zählt nicht als neue Messung. Solange wird der letzte plausible Wert gezeigt,
+  höchstens zehn Minuten, danach „unbekannt". Beides steht einmal im Log,
+  bei einem flatternden Sensor höchstens einmal pro Stunde. Danke für den
+  Hinweis auf das Minimum von 6 %.
+- Wartungsquittung: Der wirksame Filterstatus wird sofort veröffentlicht, nicht
+  erst beim nächsten Abruf - Logzeile und Anzeige stimmen damit überein. Lässt
+  sich die Quittung nicht speichern, meldet die Bridge das als Warnung und
+  „unconfirmed" statt „acknowledged".
+- Bridge 1.4.32.
+
 ## 1.6.23
 - Nachkontrolle zu 1.6.22. „Dauerhaft grün" heißt für die Wartungsquittung jetzt:
   mindestens zehn Abrufe in Folge und mindestens zehn Minuten. Zehn Abrufe allein

@@ -55,6 +55,14 @@ lässt sich nicht von einem Gerät auf ein anderes übertragen. Geräte ohne
 Messung bekommen Offset 0 und regeln auf die Rohwerte — der Generator weist am
 Ende darauf hin, welche das sind.
 
+## Nur Master-Geräte eintragen
+
+Bei gekoppelten Geräten läuft ein Slave immer mit seinem Master; sein eigener
+Modus lässt sich nicht getrennt steuern, und seit Add-on 1.6.24 zeigt sein
+`Mode` den Modus des Masters. In `geraete.yaml` gehört deshalb je Zone nur das
+Master-Gerät (Sensor „Device Role" = `Master`). Ein Slave als Eintrag würde die
+Entfeuchtung alle zehn Minuten neu auslösen, ohne dass sich am Gerät etwas ändert.
+
 ## Installation
 
 ```bash

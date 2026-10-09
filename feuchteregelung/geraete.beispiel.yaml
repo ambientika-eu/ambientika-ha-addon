@@ -38,6 +38,8 @@ einstellungen:
   modus_normal: ECO
 
 geraete:
+  # Nur Master-Geräte (Sensor "Device Role" = Master). Slaves laufen mit ihrem
+  # Master und lassen sich nicht getrennt schalten.
   # offset_temperatur / offset_feuchte: eigene Messreihe gegen ein
   # Referenzgerät im selben Raum, dann Differenz eintragen. Die Werte unten
   # stammen aus dem Vergleich Büro (Gerät 26,0 °C / 46 % gegen zwei
