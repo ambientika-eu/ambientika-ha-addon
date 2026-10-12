@@ -3,6 +3,29 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.25
+- Gemittelte Messwerte: Jedes Gerät hat zwei neue Sensoren „Humidity (averaged)"
+  und „Temperature (averaged)". Weil die Einheit etwa alle halbe Minute die
+  Richtung wechselt, sieht der Fühler abwechselnd Raum- und Zuluft, und ein
+  einzelner Feuchtewert springt um bis zu rund 20 Prozentpunkte - die Kachel
+  zeigt bei jedem Blick etwas anderes, und eine Automation auf eine Feuchte-
+  schwelle löst je nach Taktphase aus. Die neuen Sensoren zeigen das zeitlich
+  gewichtete Mittel der veröffentlichten Werte über die letzten 30 Minuten
+  (Option `average_window_min`, 1-240, mindestens 20 Abrufe). Mehrfach gelesene
+  Statuspakete, Zusatzveröffentlichungen und ausgefallene Abrufe verschieben das
+  Mittel nicht; zurückgehaltene unplausible Werte zählen nicht. Nach dem Start
+  „unbekannt", bis rund zwei Minuten Werte vorliegen. „Humidity" und
+  „Temperature" bleiben unverändert daneben und reagieren sofort, etwa auf das
+  Duschen. Das Mittel umfasst den ganzen Takt (Raum- und Zuluft): ein ruhiger
+  Wert für Anzeige, Verlauf und Schwellen, kein reiner Raumluftwert. Zu
+  erwarten: Die Cloud liefert etwa ein Paket je halbe Minute, also etwa einen
+  Messwert je Umkehrung; welche Taktphase dabei erwischt wird, wandert langsam.
+  Das Mittel ist darum deutlich ruhiger als der Rohwert, kann aber über eine
+  Stunde noch um einige Punkte wandern - ein längeres Fenster (60 min) halbiert
+  das. Am besten mit dem Abrufintervall 30 s (Standard) oder kürzer. Danke für
+  den Vorschlag.
+- Bridge 1.4.33.
+
 ## 1.6.24
 - Modus von Slave-Einheiten: Ein gekoppelter Slave läuft mit dem Master seiner
   Zone, sein eigenes Modusfeld gibt nicht wieder, wie er lüftet - ein Slave kann
