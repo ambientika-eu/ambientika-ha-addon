@@ -3,6 +3,24 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.26
+- Mittelungsfenster je Gerät: Neue Option `average_window_devices` gibt
+  einzelnen Geräten ein eigenes Fenster für „Humidity (averaged)" und
+  „Temperature (averaged)", z. B. `Gäste-Bad=15, Schlafzimmer Eltern=60` -
+  das Bad folgt dem Duschen schneller, das Schlafzimmer wird stärker geglättet.
+  Gerätename wie in der App oder Seriennummer, Groß-/Kleinschreibung egal,
+  1-240 Minuten je Eintrag; nicht genannte Geräte behalten
+  `average_window_min`. Die Untergrenze von 20 Abrufen gilt auch hier. Ein
+  kürzeres Fenster folgt einer Änderung schneller, zeigt aber mehr von der
+  Restschwankung (simuliert: 15 min etwa doppelt so viel wie 30 min je Stunde,
+  60 min etwa halb so viel). Das Log
+  nennt nach dem Start die wirksamen Fenster; ein Name ohne passendes Gerät
+  oder ein unlesbarer Eintrag wird dort genannt und ignoriert. Minuten als
+  Zahl mit Dezimalpunkt (z. B. 7.5). Leer (Standard)
+  verhält sich wie bisher. Danke für den Vorschlag und die Auswertung.
+- DOCS: Messwerte aus einer realen Installation zum 30-Minuten-Fenster ergänzt.
+- Bridge 1.4.34.
+
 ## 1.6.25
 - Gemittelte Messwerte: Jedes Gerät hat zwei neue Sensoren „Humidity (averaged)"
   und „Temperature (averaged)". Weil die Einheit etwa alle halbe Minute die
