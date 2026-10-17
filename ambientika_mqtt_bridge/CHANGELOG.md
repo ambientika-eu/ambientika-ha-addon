@@ -3,6 +3,37 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.27
+- Wartungsquittung sichtbar: „Filter Reset Status" zeigt `acknowledged`, solange
+  die Quittung eines Slaves gilt - auch nach einem Neustart oder Update des
+  Add-ons (bisher stand dort danach `idle`, obwohl die Quittung weiter galt),
+  und fällt auf `idle` zurück, sobald sie endet. Mit `slave_filter_soft_reset`
+  hat jedes Gerät zwei neue Diagnose-Sensoren „Filter Acknowledged Since" und
+  „Filter Acknowledgement Valid Until" (`filter_ack_since` / `filter_ack_until`
+  im Status): wann die Quittung gesetzt wurde und bis wann sie gilt. Der Tag,
+  an dem der wirksame Filterstatus wieder auf den Gerätewert zurückfällt, ist
+  damit vorher zu sehen. Das Log nennt beim Start jede noch gültige Quittung mit
+  Datum und Ablauf. Danke für den Hinweis.
+- `average_window_devices`: Bindestrich, Unterstrich und Leerzeichen gelten im
+  Gerätenamen als dasselbe Trennzeichen (`Gäste-Bad` trifft ein Gerät namens
+  `Gäste Bad`, auch mit einem Gedankenstrich vom Handy; `Gästebad` nicht). Die
+  Doku nennt jetzt die Seriennummer als sicheren Weg und verwendet sie im
+  Beispiel.
+- „Filter Reset Status": Ein Reset, der wirklich greift (Zähler am Gerät
+  gelöscht), entfernt eine gespeicherte Quittung; das Urteil eines gedrückten
+  Resets (`confirmed` / `unconfirmed`) bleibt wie bisher stehen. Nach einem
+  Reconnect zum Broker werden die Zustände neu gesendet. Eine beschädigte
+  `filter_ack.json` kostet weder den Start noch einen Abruf: unbrauchbare
+  Einträge werden mit Logzeile entfernt.
+- Dokumentation: Die Optionstabellen in README und DOCS führen jetzt alle
+  Optionen auf - NeuraCell-X (Radon), den Taupunkt-Block, `average_window_min`
+  und `average_window_devices` -, mit Standardwert und Erklärung. Die
+  Funktionsübersicht in der README nennt die Entitäten, die es wirklich gibt
+  (statt „Filter alarm", „defrost", „power consumption"), und der Sensor für die
+  laufende Funktion im SMART-Modus heißt in der Doku wie in Home Assistant
+  „Last Mode".
+- Bridge 1.4.35.
+
 ## 1.6.26
 - Mittelungsfenster je Gerät: Neue Option `average_window_devices` gibt
   einzelnen Geräten ein eigenes Fenster für „Humidity (averaged)" und
