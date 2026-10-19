@@ -3,6 +3,18 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.28
+- Slave-Filterzähler richtiggestellt (Log und DOCS): Der Hersteller setzt den
+  Filter je Zone nur über den Master zurück - der Reset löscht den Zähler des
+  Masters, ein Slave behält seinen eigenen, und am Gerät selbst gibt es dafür
+  nichts zu drücken (der Filteralarm der Geräte ist nur bei Mastern aktiv).
+  Der bisherige Hinweis „Reset the filter directly at the unit" war falsch.
+  Der einzige Weg, den eigenen Zähler eines Slaves zu löschen, ist ein Reset,
+  solange das Gerät Master ist: in der App vorübergehend als Einzelgerät
+  einrichten, Filter zurücksetzen, wieder als Slave koppeln. Für den Alltag
+  bleibt die Wartungsquittung (`slave_filter_soft_reset`) der einfachere Weg.
+- Bridge 1.4.36 (nur Logtext und Doku, keine Funktionsänderung).
+
 ## 1.6.27
 - Wartungsquittung sichtbar: „Filter Reset Status" zeigt `acknowledged`, solange
   die Quittung eines Slaves gilt - auch nach einem Neustart oder Update des
