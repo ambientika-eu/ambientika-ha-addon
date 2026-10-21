@@ -3,6 +3,20 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.29
+- NeuraCell-X: Die zeitgesteuerte Abluft (TimedExpulsion, 20 Minuten) wird nicht
+  mehr als „Modus davor" gespeichert. Griff der Radon- oder Taupunktschutz ein,
+  während ein Gerät in dieser Abluft lief, stellte die Bridge sie nach dem
+  Schutz wieder her: noch einmal 20 Minuten volle Abluft, und danach fiel das
+  Gerät in den Schutzmodus (Off bzw. Zuluft) zurück statt in seinen normalen
+  Betrieb. Jetzt wird der Modus gespeichert, zu dem die Abluft selbst
+  zurückgekehrt wäre (`last_operating_mode` des Geräts). Meldet das Gerät keinen
+  brauchbaren, bleibt es beim bisherigen Verhalten - mit Hinweis im Log.
+- Eine während des Schutzes angeforderte zeitgesteuerte Abluft wird nicht mehr
+  für später vorgemerkt (sie ist eine Aktion mit Ende, kein Modus), das Log
+  sagt es. Alle anderen Moduswechsel werden wie bisher nach dem Schutz angewandt.
+- Bridge 1.4.37.
+
 ## 1.6.28
 - Slave-Filterzähler richtiggestellt (Log und DOCS): Der Hersteller setzt den
   Filter je Zone nur über den Master zurück - der Reset löscht den Zähler des
