@@ -3,6 +3,32 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.30
+- Hysterese für „Humidity (averaged)" je Gerät: Neue Option
+  `humidity_avg_hysteresis_devices`, z. B. `Gäste-Bad=1`. Der angezeigte
+  gemittelte Feuchtewert ändert sich erst, wenn das Mittel um mindestens so viele
+  Prozentpunkte von ihm abweicht. Hintergrund: Das Gerät meldet die Feuchte in
+  groben Stufen von 2–3 Punkten, und bei einem kurzen Fenster kann eine einzige
+  Phase der langsam wandernden Abtastung das ganze Fenster füllen - in ruhigen
+  Stunden wanderte das 10-Minuten-Mittel dann um 1–2 Punkte, ohne dass sich im
+  Raum etwas änderte. Mit der Hysterese bleibt der Wert dort stehen, eine Dusche
+  (Dutzende Punkte) kommt sofort durch. Der Preis: Der angezeigte Wert kann bis
+  zur Hysterese neben dem echten Mittel liegen, und langsame echte Änderungen
+  kommen in Stufen. 1 ist ein guter Anfang, 1,5 wenn nachts noch Stufen zu sehen
+  sind. Einträge und Namenszuordnung wie bei `average_window_devices`
+  (Seriennummer oder Name wie in der App), 0–10 Punkte mit Dezimalpunkt, ein
+  `%` dahinter ist erlaubt; 0 oder nicht genannt = keine Hysterese. Nur
+  „Humidity (averaged)" ist betroffen - Rohwerte, „Temperature (averaged)" und
+  die Mittelung selbst bleiben unverändert, nach „unbekannt" wird das erste
+  Mittel wie berechnet gezeigt. Das Log nennt die Einstellung nach dem Start.
+  Ein Median statt des Mittelwerts wurde nachgerechnet und verworfen: Auf dem
+  groben Stufenraster springt er um eine ganze Stufe, sobald eine Phase etwa
+  die Hälfte des Fensters einnimmt. Danke für die Auswertung und den Vorschlag.
+- DOCS: Messwerte aus einer realen Installation zu 10 statt 15 Minuten im Bad
+  ergänzt (Duschspitze etwa 4 Minuten früher, nachts etwa ein Drittel mehr
+  Unruhe).
+- Bridge 1.4.38.
+
 ## 1.6.29
 - NeuraCell-X: Die zeitgesteuerte Abluft (TimedExpulsion, 20 Minuten) wird nicht
   mehr als „Modus davor" gespeichert. Griff der Radon- oder Taupunktschutz ein,
