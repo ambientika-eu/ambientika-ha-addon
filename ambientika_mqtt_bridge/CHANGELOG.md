@@ -3,6 +3,51 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.32
+- Zwei neue Diagnose-Sensoren je Gerät (Anregung aus einer Installation mit fünf
+  SMART): „Last Status Packet" zeigt, wann die Cloud zuletzt ein Statuspaket des
+  Geräts geliefert hat - ein Gerät ohne Strom oder WLAN bleibt dort stehen, Home
+  Assistant zeigt „vor 3 Stunden". „Failed Polls" zählt die fehlgeschlagenen
+  Abrufe seit dem Start des Add-ons als Zähler mit Verlauf; die Attribute nennen
+  die laufende Serie, den letzten Fehlabruf mit der Antwort der Cloud und den
+  jüngsten Ausfall mit Beginn, Ende und Anzahl der Abrufe. Beide hängen an der
+  Verfügbarkeit des Add-ons, nicht an der des Geräts, und bleiben darum auch
+  lesbar, während das Gerät selbst „nicht verfügbar" ist. Topic
+  `ambientika/<serial>/diagnostics` (retained, nach jedem Abruf).
+- Protokoll bei einem Gerät, das nicht antwortet: Die ersten Fehlabrufe bis zur
+  Schwelle `availability_failure_threshold` stehen wie bisher einzeln im Log,
+  danach einmal je Stunde eine Zusammenfassung mit Zähler und Beginn des
+  Ausfalls; die Rückkehr nennt die Dauer („answering again after 1063 failed
+  poll(s) since …"). Neun Stunden ohne Strom ergaben bisher 1063 gleiche Zeilen.
+- Hysterese auch für „Temperature (averaged)" und ein Vorgabewert für alle
+  Geräte: Neue Optionen `humidity_avg_hysteresis` (0–10 %-Punkte) und
+  `temperature_avg_hysteresis` (0–5 °C) gelten für jedes Gerät; die bisherige
+  Liste `humidity_avg_hysteresis_devices` und die neue
+  `temperature_avg_hysteresis_devices` setzen einzelne Geräte abweichend (`=0`
+  schaltet dort ab). Das Gerät meldet die Temperatur in ganzen Grad, das Mittel
+  eines kurzen Fensters wandert in ruhigen Stunden um einige Zehntel; 0.3 °C ist
+  ein guter Anfang. Das Log nennt die Einstellungen nach dem Start, ein Wert
+  außerhalb des Bereichs wird mit Hinweis begrenzt. Standard 0 = wie bisher.
+- Zonen-Topologie im Log: Nach dem ersten Abruf aller Geräte steht je Zone eine
+  Zeile mit Master und Slaves samt Rollen („Zone topology - zone 0: Master Flur
+  (…); Slaves: Wohnzimmer (…) SlaveEqualMaster, …"), und erneut, sobald sich
+  etwas ändert (Werksreset, Neukopplung in der App). Das ist das Bild, das man
+  sich bisher vor einem Eingriff in der App von Hand notiert hat.
+- Filter-Reset am Slave: Der Knopf „Filter zuruecksetzen" und der Sensor
+  „Filter Reset Status" tragen jetzt Attribute aus `ambientika/<serial>/reset_info`
+  (Rolle, Zonen-Master, ob der Cloud-Reset den eigenen Zähler löscht, ein Hinweis
+  in Klartext, was ein Druck auf diesem Gerät bewirkt, sowie Start, Ergebnis und
+  Zeit des letzten Resets). Bei einem gekoppelten Slave steht dort, dass sein
+  eigener Zähler stehen bleibt und mit einem Werksreset des Geräts gelöscht wird
+  (danach in der App neu einrichten und der Zone zuordnen) - eine Messung aus
+  der Praxis vom November: Nach dem Werksreset stand der Rohwert wieder auf Good,
+  ohne den Umweg über das Einzelgerät. Die Cloud hält keine Befehle vor; ein vor
+  dem Werksreset gesendeter Reset wird danach nicht nachgeliefert. DOCS und
+  Logtext nennen jetzt diesen Weg; das Einzelgerät bleibt die Rückfallebene,
+  die Wartungsquittung (`slave_filter_soft_reset`) der einfache Weg für den
+  Alltag.
+- Bridge 1.4.41.
+
 ## 1.6.31
 - NeuraCell-X Notlüftung: Hält die Taupunktsperre ihre Geräte aus und sind
   Taupunktsteuerung und Radon-Messgerät beide nicht verbunden, kommt weder eine
