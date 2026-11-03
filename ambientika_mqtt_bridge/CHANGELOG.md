@@ -3,6 +3,36 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.31
+- NeuraCell-X Notlüftung: Hält die Taupunktsperre ihre Geräte aus und sind
+  Taupunktsteuerung und Radon-Messgerät beide nicht verbunden, kommt weder eine
+  Taupunktentscheidung noch ein Radonwert herein. Nach `dewpoint_fallback_timeout`
+  (30 min, 0 = aus) laufen die gesperrten Geräte mit Wärmerückgewinnung auf
+  `dewpoint_fallback_fan` (Low), bis die Taupunktsteuerung wieder verbunden ist
+  oder das Messgerät wieder einen Wert liefert, die Sperre endet oder der
+  Radonschutz greift; danach gilt wie gewohnt die Sperre bzw. die Wiederherstellung.
+  Die Baseline jedes Geräts bleibt die von vor der Sperre. Neuer Sensor
+  „Fallback Ventilation Active"; ein Neustart des Add-ons setzt die Notlüftung mit
+  den gespeicherten Baselines fort. Gilt für jede `dewpoint_lost_action`, braucht
+  ein Radon-Messgerät auf `radon_meter_topic`.
+- Taupunktsteuerung nach einem Neustart des Add-ons oder Reconnect zum Broker:
+  Ohne Nachricht innerhalb von `dewpoint_controller_timeout` (30 min, 0 = aus) gilt
+  sie als getrennt - auch wenn kein Last Will kommt, weil der Broker selbst neu
+  gestartet wurde. Der Sensor „Dew Point Controller Connected" und die
+  Handy-Hinweise des Beispielpakets greifen damit auch in diesem Fall.
+- Schutzzustände an gekoppelte Geräte: Ein Gerät, das genau diesen Zustand
+  (Sperre, Radonschutz, Notlüftung) schon erhalten hat oder ihn meldet, bekommt
+  keinen weiteren Befehl - ein gekoppelter Slave erhält jeden Wechsel einmal,
+  und ein Wechsel der Sperre während eines Radonalarms löst keine Befehle aus.
+- `radon_protection_fan` / `dewpoint_fallback_fan`: Low, Medium oder High; Stufen,
+  die das Gerät selbst wählt (Night, Turbo), fallen auf den Standard zurück.
+- Protokoll: Verbindungsprobleme zur Ambientika-Cloud (Timeout, Abbruch) stehen
+  als eine Zeile im Protokoll statt mit vollständigem Fehlerverlauf, auch beim
+  Start ohne Internetverbindung.
+- Beispielpaket Schlafetage (im Bridge-Repository): Handy-Hinweis, wenn die
+  Notlüftung anspringt oder endet.
+- Bridge 1.4.40.
+
 ## 1.6.30
 - Hysterese für „Humidity (averaged)" je Gerät: Neue Option
   `humidity_avg_hysteresis_devices`, z. B. `Gäste-Bad=1`. Der angezeigte
