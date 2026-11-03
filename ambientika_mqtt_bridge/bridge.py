@@ -69,6 +69,27 @@ except ImportError as exc:
 
 log = logging.getLogger("ambientika_bridge")
 
+
+def _is_network_error(exc: BaseException) -> bool:
+    """A connection problem to the Ambientika cloud (timeout, refused, reset).
+
+    Such errors happen when the internet connection or the server is briefly
+    unreachable; the bridge retries on the next poll. They are logged as one
+    line instead of a full traceback.
+    """
+    return isinstance(exc, (aiohttp.ClientConnectionError, asyncio.TimeoutError,
+                            TimeoutError, ConnectionError))
+
+
+def _log_cloud_exception(what: str, exc: BaseException) -> None:
+    """Log an exception from a cloud call (`what` names the call and the unit):
+    one line for a connection problem, the full traceback for anything else."""
+    if _is_network_error(exc):
+        log.warning("%s: no connection to the Ambientika cloud (%s: %s) - retrying on the "
+                    "next poll.", what, type(exc).__name__, exc)
+    else:
+        log.exception("%s: %s", what, exc)
+
 # Version shown in the startup banner. Read from the environment so this file
 # stays byte-identical across all copies/repos (single source of truth); each
 # Home Assistant add-on injects its own config.yaml version via BRIDGE_VERSION
@@ -395,6 +416,12 @@ RADON_PROTECTION_MODE = OperatingMode.Intake
 RADON_PROTECTION_FAN_DEFAULT = FanSpeed.Low
 # Dew-point "do not ventilate" == switch the unit off.
 DEWPOINT_BLOCK_MODE = OperatingMode.Off
+# Fallback ventilation (see NeuraCellXController._refresh_fallback): the
+# dew-point block holds the units Off, but neither the Taupunktsteuerung nor the
+# radon meter is connected - nobody watches the room any more. Heat recovery at
+# a low step keeps the air moving without much outdoor air coming in.
+DEWPOINT_FALLBACK_MODE = OperatingMode.ManualHeatRecovery
+DEWPOINT_FALLBACK_FAN_DEFAULT = FanSpeed.Low
 # The 20-minute timed extraction (app button "timed extraction"): the unit runs
 # it and then returns BY ITSELF to the mode it reports as last_operating_mode.
 # It is an action with an end, not a mode to come back to - so it never becomes
@@ -738,6 +765,23 @@ class BridgeConfig:
         #   (ventilate) or "block" (units off). Radon keeps priority either way.
         self.dewpoint_availability_topic = ""
         self.dewpoint_signal_timeout = 0
+        # - dewpoint_controller_timeout: the Ambientika Taupunktsteuerung after a
+        #   bridge restart or broker reconnect. Its "online" from the broker's
+        #   store says nothing about now, and if the broker itself restarted its
+        #   Last Will never comes. Without any live message for this many minutes
+        #   it counts as disconnected. 0 = off.
+        self.dewpoint_controller_timeout = 30
+        # - dewpoint_fallback_timeout / dewpoint_fallback_fan: while the dew-point
+        #   block holds its units Off and BOTH the Taupunktsteuerung and the
+        #   Ambientika radon meter are disconnected, nobody watches the room:
+        #   no dew-point decision and no radon value. After this many minutes
+        #   the blocked units run heat recovery (ManualHeatRecovery) at this fan
+        #   step until the Taupunktsteuerung is connected again or the radon
+        #   meter delivers a value again, the block is released or radon
+        #   protection takes over. 0 = off. Needs a radon meter on
+        #   radon_meter_topic; applies with every dewpoint_lost_action.
+        self.dewpoint_fallback_timeout = 30
+        self.dewpoint_fallback_fan = "Low"
         self.dewpoint_lost_action = "keep"
         # Native topics of the Ambientika Taupunktsteuerung (MQTT firmware):
         # dew-point/<id>/state carries {"ventilating": true|false, "reason": ..}
@@ -750,13 +794,29 @@ class BridgeConfig:
         self.dewpoint_controller_key = "ventilating"
 
     # ----- helpers -----
+    def _fan_option(self, name: str, option: str, default: FanSpeed) -> FanSpeed:
+        """Fan step from an option value: Low, Medium or High. Anything else -
+        unknown, or a read-only step the unit chooses itself (Night, Turbo) that
+        the cloud would not accept as a command - falls back to the default
+        (warned once per value, not on every poll)."""
+        member = dict.get(FanSpeed._member_map_, str(name or "").strip())
+        if member is None or is_compat_member(FanSpeed, member):
+            warned = self.__dict__.setdefault("_fan_option_warned", set())
+            if (option, name) not in warned:
+                warned.add((option, name))
+                log.warning("Invalid %s %r, using %s.", option, name, default.name)
+            return default
+        return member
+
     @property
     def radon_protection_fan_speed(self) -> FanSpeed:
-        try:
-            return FanSpeed[self.radon_protection_fan]
-        except KeyError:
-            log.warning("Invalid radon_protection_fan %r, using Low.", self.radon_protection_fan)
-            return RADON_PROTECTION_FAN_DEFAULT
+        return self._fan_option(self.radon_protection_fan, "radon_protection_fan",
+                                RADON_PROTECTION_FAN_DEFAULT)
+
+    @property
+    def dewpoint_fallback_fan_speed(self) -> FanSpeed:
+        return self._fan_option(self.dewpoint_fallback_fan, "dewpoint_fallback_fan",
+                                DEWPOINT_FALLBACK_FAN_DEFAULT)
 
     @property
     def radon_device_alarm_value_set(self) -> set:
@@ -879,6 +939,18 @@ class BridgeConfig:
                                                           self.dewpoint_signal_timeout)))
         except (TypeError, ValueError):
             pass
+        try:
+            self.dewpoint_controller_timeout = max(0, int(get("dewpoint_controller_timeout",
+                                                              self.dewpoint_controller_timeout)))
+        except (TypeError, ValueError):
+            pass
+        try:
+            self.dewpoint_fallback_timeout = max(0, int(get("dewpoint_fallback_timeout",
+                                                            self.dewpoint_fallback_timeout)))
+        except (TypeError, ValueError):
+            pass
+        self.dewpoint_fallback_fan = (get("dewpoint_fallback_fan", self.dewpoint_fallback_fan)
+                                      or self.dewpoint_fallback_fan)
         self.dewpoint_lost_action = str(get("dewpoint_lost_action", self.dewpoint_lost_action)
                                         or self.dewpoint_lost_action).strip().lower()
         dct = get("dewpoint_controller_topic", self.dewpoint_controller_topic)
@@ -929,6 +1001,7 @@ class BridgeConfig:
             ("dewpoint_device_block_modes", ("DEWPOINT_DEVICE_BLOCK_MODES",)),
             ("dewpoint_availability_topic", ("DEWPOINT_AVAILABILITY_TOPIC",)),
             ("dewpoint_lost_action", ("DEWPOINT_LOST_ACTION",)),
+            ("dewpoint_fallback_fan", ("DEWPOINT_FALLBACK_FAN",)),
             ("dewpoint_controller_topic", ("DEWPOINT_CONTROLLER_TOPIC",)),
             ("dewpoint_controller_key", ("DEWPOINT_CONTROLLER_KEY",)),
             ("average_window_devices", ("AVERAGE_WINDOW_DEVICES",)),
@@ -949,6 +1022,18 @@ class BridgeConfig:
         if dst:
             try:
                 self.dewpoint_signal_timeout = max(0, int(dst))
+            except ValueError:
+                pass
+        dft = _env("DEWPOINT_FALLBACK_TIMEOUT")
+        if dft:
+            try:
+                self.dewpoint_fallback_timeout = max(0, int(dft))
+            except ValueError:
+                pass
+        dct_env = _env("DEWPOINT_CONTROLLER_TIMEOUT")
+        if dct_env:
+            try:
+                self.dewpoint_controller_timeout = max(0, int(dct_env))
             except ValueError:
                 pass
         rmt = _env("RADON_METER_TIMEOUT")
@@ -1474,6 +1559,15 @@ def build_neuracell_discovery(cfg: BridgeConfig):
             "device_class": "moisture", "icon": "mdi:water-off",
             "device": device_info,
         }),
+        (f"{base}/binary_sensor/neuracell_dewpoint_fallback/config", {
+            "name": "Fallback Ventilation Active",
+            "unique_id": "neuracell_dewpoint_fallback",
+            "state_topic": state,
+            "value_template": "{{ value_json.dewpoint_fallback | default(false) }}",
+            "payload_on": "True", "payload_off": "False",
+            "device_class": "problem", "icon": "mdi:fan-alert",
+            "device": device_info,
+        }),
         (f"{base}/sensor/neuracell_dewpoint_indoor/config", {
             "name": "Dew Point Indoor",
             "unique_id": "neuracell_dewpoint_indoor",
@@ -1545,6 +1639,12 @@ class NeuraCellXController:
         self._tps_watch_start = time.monotonic()
         self._tps_last_block: Optional[bool] = None  # last block decision, also while offline
         self._tps_native_seen: Optional[float] = None  # last live message on the controller's own topics
+        self._tps_stored_online = False  # only a stored "online" since the last (re)connect
+        # Fallback ventilation (dewpoint_fallback_timeout): nobody watches the room.
+        self.dewpoint_fallback = False
+        self._blind_since: Optional[float] = None   # monotonic: TPS and radon meter both lost
+        self._fallback_changed = False              # reconcile() must force the new state
+        self._fallback_from_disk = False            # resumed from the state file (startup grace)
         self.dewpoint_block = False
         self.last_radon: Optional[float] = None
 
@@ -1774,6 +1874,8 @@ class NeuraCellXController:
         if now != self._meter_connected_reported:
             self._meter_connected_reported = now
             changed = True
+        if changed:
+            self._refresh_fallback()
         if changed and publish:
             self.bridge.publish_neuracell_state()
         return changed
@@ -1806,6 +1908,7 @@ class NeuraCellXController:
             self._meter_note_known(state_topic, online and not retained)
         await self.check_radon_meter_link(publish=False)
         self.bridge.publish_neuracell_state()
+        await self._settle_fallback()
 
     async def on_radon_value(self, raw: str, source: str = "value", retained: bool = False) -> None:
         if not self.cfg.neuracell_enabled:
@@ -1863,7 +1966,13 @@ class NeuraCellXController:
         if self.radon_active != before:
             await self.reconcile(force=True)
         else:
-            self.bridge.publish_neuracell_state()
+            # A current value is what ends the fallback ventilation (see
+            # _refresh_fallback) - act on it now, not only with the next poll.
+            self._refresh_fallback()
+            if self._fallback_changed:
+                await self.reconcile()
+            else:
+                self.bridge.publish_neuracell_state()
 
     async def on_radon_alarm(self, raw: str) -> None:
         if not self.cfg.neuracell_enabled:
@@ -1943,6 +2052,15 @@ class NeuraCellXController:
             # its keepalive, so a known "online" is current; the time limit only
             # covers controllers without a Last Will.
             return True
+        if (self._tps_stored_online and self._tps_native_seen is None
+                and cfg.dewpoint_controller_timeout > 0):
+            # Known only from the broker's store after a restart / reconnect: a
+            # controller that went away while the broker was down has no Last
+            # Will coming, so it gets the time limit of the radon meter.
+            if not self.bridge.mqtt_connected():
+                return self._tps_connected_reported
+            if time.monotonic() - self._tps_watch_start > cfg.dewpoint_controller_timeout * 60:
+                return False
         if cfg.dewpoint_signal_timeout > 0:
             if not self.bridge.mqtt_connected():
                 # The bridge itself is cut off from the broker: nothing can arrive,
@@ -2003,7 +2121,8 @@ class NeuraCellXController:
     def _tps_seen(self) -> None:
         self._tps_last_seen = time.monotonic()
 
-    async def on_dewpoint_availability(self, raw: str, retained: bool = False) -> None:
+    async def on_dewpoint_availability(self, raw: str, retained: bool = False,
+                                       native: bool = False) -> None:
         """Availability of the Taupunktsteuerung (its Last Will topic).
 
         `retained` = delivered from the broker's store on subscribe. A stored
@@ -2033,14 +2152,21 @@ class NeuraCellXController:
                 log.info("NeuraCell-X: Taupunktsteuerung reported online by the broker's store after "
                          "the reconnect - waiting for a message.")
             self._tps_avail = None
+            # Time limit after a restart only for the Ambientika controller
+            # (its sensor messages count as sign of life); a third-party one
+            # may only send on change.
+            self._tps_stored_online = native
             await self.check_dewpoint_link()
             self.bridge.publish_neuracell_state()
+            await self._settle_fallback()
             return
         was_connected = self._tps_connected_reported
         self._tps_avail = avail
+        self._tps_stored_online = False
         self._tps_seen()
         await self.check_dewpoint_link()
         await self._tps_back(was_connected)
+        await self._settle_fallback()
 
     async def _tps_back(self, was_connected: Optional[bool]) -> None:
         """Back in contact after a Last Will "offline" or an expired time limit:
@@ -2060,15 +2186,21 @@ class NeuraCellXController:
         self._tps_connected_reported = now
         if now is False:
             action = self.cfg.dewpoint_lost_action
+            if (self._tps_stored_online and self._tps_native_seen is None
+                    and self._tps_avail is None):
+                log.warning("NeuraCell-X: Taupunktsteuerung sent nothing for %d min after the "
+                            "restart / reconnect - counted as disconnected.",
+                            self.cfg.dewpoint_controller_timeout)
             log.warning("NeuraCell-X: Taupunktsteuerung disconnected - dew-point block %s.",
                         {"release": "released (dewpoint_lost_action=release)",
                          "block": "set ON (dewpoint_lost_action=block)"}.get(
                             action, "kept as it is (%s)" % ("ON" if self.dewpoint_block else "OFF")))
             if action in ("release", "block"):
-                await self._set_dewpoint_block(action == "block")
+                await self._set_dewpoint_block(action == "block")   # reconciles, fallback included
                 return
         elif now is True and prev is False:
             log.info("NeuraCell-X: Taupunktsteuerung connected again.")
+        self._refresh_fallback()
         self.bridge.publish_neuracell_state()
 
     # ----- dew-point signals -----
@@ -2101,6 +2233,7 @@ class NeuraCellXController:
         the controller publishes there, so it is alive - whatever its Last Will
         said before (e.g. a stale "offline" when its "online" was missed)."""
         self._tps_native_seen = time.monotonic()
+        self._tps_stored_online = False
         if self._tps_avail is False:
             # Its stale "offline" no longer counts; "online" only when it says
             # so itself (a configured time limit stays in force meanwhile).
@@ -2115,6 +2248,7 @@ class NeuraCellXController:
         self._tps_seen()
         await self.check_dewpoint_link()
         await self._tps_back(was_connected)
+        await self._settle_fallback()
 
     async def _apply_dewpoint_block(self, block: bool, raw: str, retained: bool) -> None:
         self._tps_last_block = block
@@ -2139,6 +2273,7 @@ class NeuraCellXController:
             self._tps_seen()
             await self.check_dewpoint_link()
         await self._set_dewpoint_block(block)
+        await self._settle_fallback()
 
     async def on_dewpoint_sensor(self, which: str, raw: str) -> None:
         """One of the four sensor inputs (source='computed')."""
@@ -2206,6 +2341,9 @@ class NeuraCellXController:
             return (RADON_PROTECTION_MODE, self.cfg.radon_protection_fan_speed,
                     self._api_value(HumidityLevel, status["humidity_level"], HumidityLevel.Normal))
         if self.dewpoint_block:
+            if self.dewpoint_fallback:
+                return (DEWPOINT_FALLBACK_MODE, self.cfg.dewpoint_fallback_fan_speed,
+                        self._api_value(HumidityLevel, status["humidity_level"], HumidityLevel.Normal))
             return (DEWPOINT_BLOCK_MODE,
                     self._api_value(FanSpeed, status["fan_speed"], FanSpeed.Low),
                     self._api_value(HumidityLevel, status["humidity_level"], HumidityLevel.Normal))
@@ -2257,9 +2395,13 @@ class NeuraCellXController:
                  "to (%s) as its baseline, not TimedExpulsion.", serial, last.name)
         return last
 
-    def _still_protected(self, serial: str, status: dict) -> bool:
+    def _still_protected(self, serial: str, status: dict, device: Any = None) -> bool:
         """Is the unit still in the protection state we put it in (restart check)?"""
         applied = self._applied.get(serial)
+        if applied is not None and device is not None and self._is_coupled_slave(device):
+            # A coupled Slave's own mode field does not follow the command (its
+            # Master decides), so it cannot show a change made meanwhile.
+            return True
         if applied is not None:
             return (status["operating_mode"] == applied[0]
                     and (applied[0] != RADON_PROTECTION_MODE or status["fan_speed"] == applied[1]))
@@ -2285,7 +2427,7 @@ class NeuraCellXController:
             status = await self.bridge.read_status(device)
             if status is None:
                 return False
-            if not self._still_protected(serial, status):
+            if not self._still_protected(serial, status, device):
                 log.info("NeuraCell-X: %s was changed while the bridge was down; "
                          "dropping its saved baseline.", serial)
                 self._saved_modes.pop(serial, None)
@@ -2362,6 +2504,19 @@ class NeuraCellXController:
             base.update(self._pending_manual.pop(serial, {}))
             self._saved_modes[serial] = base
         mode, fan, hum = desired
+        if (self._applied.get(serial) == (mode, fan)
+                and (self._is_coupled_slave(device)
+                     or (status["operating_mode"] == mode and status["fan_speed"] == fan))):
+            # The unit has already received exactly this protection state and
+            # (for a Master) still reports it: nothing to send, not even on a
+            # forced reconcile - e.g. when the dew-point block toggles while
+            # radon protection holds every unit in Intake anyway. A coupled
+            # Slave runs with its zone Master and keeps reporting its own mode
+            # field, which a command does not change, so for it the record of
+            # the last command counts; sending it again on every poll would
+            # only repeat the command (and the unit's confirmation beep). Its
+            # Master is checked against its status as before.
+            return
         if (force or status["operating_mode"] != mode
                 or status["fan_speed"] != fan
                 or status["humidity_level"] != hum):
@@ -2369,6 +2524,97 @@ class NeuraCellXController:
                 self._applied[serial] = (mode, fan)
         else:
             self._applied[serial] = (mode, fan)
+
+    def _is_coupled_slave(self, device: Any) -> bool:
+        """True for a unit that currently runs as a Slave with a zone Master."""
+        try:
+            return self.bridge._zone_master(device) is not None
+        except Exception:
+            return False
+
+    # ----- fallback ventilation: nobody watches the room -----
+    def _refresh_fallback(self) -> None:
+        """Keep `dewpoint_fallback` in line with the inputs. Changes flags only
+        (no I/O); reconcile() acts on them, the link checks call it so the
+        published status is current.
+
+        Armed while the dew-point block holds its units Off, radon protection is
+        not active, and BOTH the Taupunktsteuerung and the radon meter count as
+        disconnected: no dew-point decision can come in and no radon value - the
+        room is unwatched. After dewpoint_fallback_timeout the fallback starts:
+        the blocked units run heat recovery at dewpoint_fallback_fan. It ends on
+        a positive sign only - the Taupunktsteuerung is connected again or the
+        radon meter delivers a current value again (a stored "online" after a
+        restart is not enough), the block is released, radon protection takes
+        over, or the option is switched off.
+        """
+        cfg = self.cfg
+        limit = cfg.dewpoint_fallback_timeout * 60
+        tps = self.dewpoint_controller_connected()
+        meter = self.radon_meter_connected()
+        if self.dewpoint_fallback:
+            reason = None
+            if limit <= 0:
+                reason = "dewpoint_fallback_timeout is 0"
+            elif not self.dewpoint_block:
+                if self._fallback_from_disk and time.monotonic() - self._started < STARTUP_GRACE_S:
+                    # Resumed after a restart: the stored block message of the
+                    # Taupunktsteuerung may not have been delivered yet.
+                    return
+                reason = "dew-point block released"
+            elif self.radon_active:
+                reason = "radon protection has priority"
+            elif tps is True:
+                reason = "Taupunktsteuerung connected again"
+            elif meter is True and self._effective_radon() is not None:
+                # Connected alone is not enough: a meter that has just started
+                # sends its first usable value about 10 minutes later. Until
+                # then nobody measures radon - the ventilation stays.
+                reason = "radon meter reporting again"
+            if reason is None:
+                return
+            self.dewpoint_fallback = False
+            self._blind_since = None
+            self._fallback_changed = True
+            self._fallback_from_disk = False
+            log.warning("NeuraCell-X: fallback ventilation ended - %s%s.", reason,
+                        " - the dew-point block (units Off) applies again"
+                        if self.dewpoint_block and not self.radon_active else "")
+            return
+        blind = (limit > 0 and self.dewpoint_block and not self.radon_active
+                 and tps is False and meter is False)
+        if not blind:
+            if self._blind_since is not None:
+                self._blind_since = None
+                why = ("dew-point block released" if not self.dewpoint_block
+                       else "radon protection" if self.radon_active
+                       else "Taupunktsteuerung reporting again" if tps is not False
+                       else "radon meter reporting again")
+                log.info("NeuraCell-X: fallback ventilation no longer pending (%s) - nothing was "
+                         "changed.", why)
+            return
+        now = time.monotonic()
+        if self._blind_since is None:
+            self._blind_since = now
+            log.warning("NeuraCell-X: Taupunktsteuerung and radon meter both disconnected while the "
+                        "dew-point block holds the units Off - fallback ventilation (heat recovery %s) "
+                        "in %d min unless one of them reports.",
+                        cfg.dewpoint_fallback_fan, cfg.dewpoint_fallback_timeout)
+            return
+        if now - self._blind_since >= limit:
+            self.dewpoint_fallback = True
+            self._fallback_changed = True
+            log.warning("NeuraCell-X: fallback ventilation - Taupunktsteuerung and radon meter "
+                        "disconnected for %d min while the dew-point block holds the units Off: the "
+                        "blocked units run heat recovery at %s until one of them reports again.",
+                        cfg.dewpoint_fallback_timeout, cfg.dewpoint_fallback_fan)
+
+    async def _settle_fallback(self) -> None:
+        """Act on a fallback change noticed by a link check outside the poll
+        path (message of the Taupunktsteuerung or the radon meter), so the units
+        follow at once and not only with the next poll."""
+        if self._fallback_changed:
+            await self.reconcile()
 
     async def reconcile(self, force: bool = False) -> None:
         """Bring every device in line with the current protection state.
@@ -2379,6 +2625,12 @@ class NeuraCellXController:
         commands for that unit take as well.
         """
         async with self._lock:
+            self._refresh_fallback()
+            if self._fallback_changed:
+                # The protection state of the blocked units changed (Off <->
+                # heat recovery): send it to every controlled unit once.
+                self._fallback_changed = False
+                force = True
             if self.override_active:
                 for serial, device in list(self.bridge.devices.items()):
                     async with self.unit_lock(serial):
@@ -2448,6 +2700,11 @@ class NeuraCellXController:
         applied.update({s: {"operating_mode": v[0].name, "fan_speed": v[1].name}
                         for s, v in self._applied.items() if s in self._saved_modes})
         state = {"saved_modes": saved, "applied": applied}
+        if self.dewpoint_fallback and self._saved_modes:
+            # Fallback ventilation in force: resume it after a restart instead of
+            # switching the units Off again until both time limits have run out.
+            # Cleared like any other state by a positive sign (see _refresh_fallback).
+            state["dewpoint_fallback"] = True
         if self._orphans:
             state["orphans_since"] = {s: o.get("since", 0) for s, o in self._orphans.items()}
         return json.dumps(state, sort_keys=True)
@@ -2498,6 +2755,8 @@ class NeuraCellXController:
             self._applied.clear()
             self._from_disk.clear()
             self._orphans.clear()
+            self.dewpoint_fallback = False
+            self._fallback_from_disk = False
             self._persisted = ""       # force a clean rewrite on the next change
         self._started = time.monotonic()
 
@@ -2562,12 +2821,17 @@ class NeuraCellXController:
                 afan = self._enum_by_name(FanSpeed, a.get("fan_speed"))
                 if aop is not None and afan is not None:
                     self._applied[serial] = (aop, afan)
+        if raw.get("dewpoint_fallback") is True and self._saved_modes:
+            self.dewpoint_fallback = True
+            self._fallback_from_disk = True
         self._persisted = "" if skipped else self._serialise_state()
         if skipped:
             self.persist()             # drop entries that no longer apply from the file
         if self._saved_modes:
-            log.warning("NeuraCell-X: resumed %d saved baseline(s) from before the restart: %s",
-                        len(self._saved_modes), ", ".join(sorted(self._saved_modes)))
+            log.warning("NeuraCell-X: resumed %d saved baseline(s) from before the restart: %s%s",
+                        len(self._saved_modes), ", ".join(sorted(self._saved_modes)),
+                        " - fallback ventilation was in force and is kept until the Taupunktsteuerung "
+                        "or the radon meter reports again" if self.dewpoint_fallback else "")
 
 
 # ---------------------------------------------------------------------------
@@ -3696,7 +3960,7 @@ class AmbientikaBridge:
         try:
             res = await device.status()
         except Exception as e:
-            log.exception("status() raised for %s: %s", device.serial_number, e)
+            _log_cloud_exception("status() raised for %s" % device.serial_number, e)
             return None
         if isinstance(res, Failure):
             log.warning("status() failed for %s: %s", device.serial_number, res)
@@ -3738,7 +4002,7 @@ class AmbientikaBridge:
         try:
             res = await device.change_mode(mode)
         except Exception as e:
-            log.exception("change_mode raised for %s: %s", device.serial_number, e)
+            _log_cloud_exception("change_mode raised for %s" % device.serial_number, e)
             return False
         if isinstance(res, Failure):
             log.error("change_mode failed for %s: %s", device.serial_number, res)
@@ -3932,7 +4196,7 @@ class AmbientikaBridge:
                         cav = _availability_filter(ct)
                         if cav and _topic_match(cav, topic):
                             self._dispatch(self.neuracell.on_dewpoint_availability(
-                                payload, retained=retained)); return
+                                payload, retained=retained, native=True)); return
                         if _topic_match(ct, topic):
                             self._dispatch(self.neuracell.on_dewpoint_controller_state(
                                 payload, retained=retained)); return
@@ -4229,7 +4493,7 @@ class AmbientikaBridge:
         try:
             res = await device.change_mode(mode)
         except Exception as e:
-            log.exception("change_mode raised for %s: %s", serial, e)
+            _log_cloud_exception("change_mode raised for %s" % serial, e)
             return
         if isinstance(res, Failure):
             log.error("change_mode failed for %s: %s", serial, res)
@@ -4315,6 +4579,9 @@ class AmbientikaBridge:
             # None = not watched (see dewpoint_availability_topic / _signal_timeout).
             "dewpoint_controller_connected": nc.dewpoint_controller_connected(),
             "dewpoint_block_devices": sorted(self.cfg.dewpoint_block_device_tokens) or "all",
+            # Fallback ventilation: block in force, but Taupunktsteuerung and radon
+            # meter both disconnected for dewpoint_fallback_timeout.
+            "dewpoint_fallback": nc.dewpoint_fallback,
             "indoor_dew_point": round(nc.indoor_dew_point, 1) if nc.indoor_dew_point is not None else None,
             "outdoor_dew_point": round(nc.outdoor_dew_point, 1) if nc.outdoor_dew_point is not None else None,
             "override_active": nc.override_active,
@@ -4457,7 +4724,7 @@ class AmbientikaBridge:
                     # An exception here used to publish nothing at all, so the
                     # entity silently kept its last retained values and looked
                     # live in the dashboard. Count it like any other failed poll.
-                    log.exception("Error polling %s: %s", serial, e)
+                    _log_cloud_exception("Error polling %s" % serial, e)
                     self._note_poll_failure(serial, "exception during poll")
 
             # Token hygiene: re-auth on an explicit 401/403, if a whole cycle of
@@ -4577,12 +4844,19 @@ class AmbientikaBridge:
                              _availability_filter(self.cfg.dewpoint_controller_topic) or "-")
                     if _availability_filter(self.cfg.dewpoint_controller_topic):
                         watch.append("availability %s" % _availability_filter(self.cfg.dewpoint_controller_topic))
+                    if self.cfg.dewpoint_controller_timeout > 0:
+                        watch.append("%d min after a restart/reconnect" % self.cfg.dewpoint_controller_timeout)
                 if self.cfg.dewpoint_availability_topic:
                     watch.append("availability %s" % self.cfg.dewpoint_availability_topic)
                 if self.cfg.dewpoint_signal_timeout > 0:
                     watch.append("timeout %d min" % self.cfg.dewpoint_signal_timeout)
                 log.info("NeuraCell-X dew point: connection watch %s, when lost -> %s.",
                          " + ".join(watch) or "off", self.cfg.dewpoint_lost_action)
+            if self.cfg.dewpoint_fallback_timeout > 0 and self.cfg.radon_source != "device" \
+                    and self.cfg.radon_meter_topic and self.cfg.neuracell_enabled:
+                log.info("NeuraCell-X dew point: fallback ventilation (heat recovery %s) after %d min "
+                         "with the block ON but Taupunktsteuerung and radon meter both disconnected.",
+                         self.cfg.dewpoint_fallback_fan, self.cfg.dewpoint_fallback_timeout)
         await self._poll_loop()
 
     def stop(self) -> None:
@@ -4656,7 +4930,15 @@ def main() -> None:
     except KeyboardInterrupt:
         bridge.stop()
     except Exception as e:
-        log.exception("Fatal error: %s", e)
+        if _is_network_error(e):
+            # No connection to the cloud at start (e.g. Home Assistant came up
+            # before the router): one line, no traceback. The add-on's watchdog
+            # (switch in its settings) starts it again.
+            log.error("Fatal error: no connection to the Ambientika cloud (%s: %s). Check the "
+                      "internet connection; with the add-on watchdog switched on it starts "
+                      "again by itself.", type(e).__name__, e)
+        else:
+            log.exception("Fatal error: %s", e)
         sys.exit(1)
 
 
