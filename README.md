@@ -46,7 +46,7 @@ Connects your Ambientika ventilation units to Home Assistant via MQTT with full 
 |---|---|
 | **Controls** | Operating mode, fan speed, humidity level, light sensor level; a *Filter zuruecksetzen* button |
 | **Sensors** | Temperature and humidity (raw and averaged), air quality, filter status (effective and raw), mode (effective and raw), fan speed, humidity level, light sensor level, device role, last mode, zone - each text value with a numeric companion; diagnostic: filter reset status, filter acknowledgement since / valid until |
-| **Binary Sensors** | Humidity alarm, night alarm |
+| **Binary Sensors** | Humidity alarm, night mode |
 | **Discovery** | MQTT Auto-Discovery (devices appear automatically in HA) |
 | **Devices** | Supports up to 20 units per installation |
 | **NeuraCell-X®** | Patent-pending radon protection + dew-point control (see below) |
@@ -122,6 +122,7 @@ more - every option is listed under [Configuration](#configuration) below.
 | `humidity_avg_hysteresis_devices` | *(empty)* | The same for single units, overriding the global value: `unit=points` entries like `average_window_devices` (0–10), e.g. `A1B2C3D4E5F6=1`; `=0` switches it off for that unit |
 | `temperature_avg_hysteresis` | `0` | Hysteresis of *Temperature (averaged)* for every unit, in °C (0–5; `0` = none) |
 | `temperature_avg_hysteresis_devices` | *(empty)* | The same for single units, overriding the global value: `unit=degrees` entries (0–5), e.g. `A1B2C3D4E5F6=0.3` |
+| `temperature_avg_window_min` | `0` | Own window of *Temperature (averaged)* for every unit, in minutes (0–240; `0` = the unit's window as for the humidity). *Humidity (averaged)* keeps its window, see below |
 | `slave_filter_soft_reset` | `false` | Maintenance acknowledgement for Slave filter counters |
 | `filter_ack_ttl_days` | `90` | How long an acknowledgement stays valid |
 
