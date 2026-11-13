@@ -3,6 +3,17 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.34
+- Gesättigter Feuchtesensor: Meldet das Gerät beim Duschen mehr als 100 %
+  Luftfeuchte (z. B. 105, 118 oder 141 %), zeigt „Humidity" jetzt 100 %, und der
+  Wert zählt als 100 % für „Humidity (averaged)". Automationen auf einen
+  Feuchte-Schwellwert sehen den Dampf damit sofort.
+- Neuer Diagnose-Sensor „Humidity raw" (standardmäßig ausgeschaltet): der
+  unveränderte Feuchtewert des Geräts, auch über 100 %; im State-Topic als
+  `humidity_raw`.
+- Dokumentation: Empfehlung für Dusch-Automationen mit eigenem, kurzem
+  Mittelungsfenster für das Bad (`average_window_devices`, z. B. 10 Minuten).
+
 ## 1.6.33
 - Eigenes Mittelungsfenster für „Temperature (averaged)": Die neue Option
   `temperature_avg_window_min` (0–240 Minuten) gibt der gemittelten Temperatur

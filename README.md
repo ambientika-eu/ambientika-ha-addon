@@ -45,7 +45,7 @@ Connects your Ambientika ventilation units to Home Assistant via MQTT with full 
 | Feature | Details |
 |---|---|
 | **Controls** | Operating mode, fan speed, humidity level, light sensor level; a *Filter zuruecksetzen* button |
-| **Sensors** | Temperature and humidity (raw and averaged), air quality, filter status (effective and raw), mode (effective and raw), fan speed, humidity level, light sensor level, device role, last mode, zone - each text value with a numeric companion; diagnostic: filter reset status, filter acknowledgement since / valid until |
+| **Sensors** | Temperature and humidity (raw and averaged), air quality, filter status (effective and raw), mode (effective and raw), fan speed, humidity level, light sensor level, device role, last mode, zone - each text value with a numeric companion; diagnostic: last status packet, failed polls, filter reset status, filter acknowledgement since / valid until, humidity raw (also above 100 % when the sensor is saturated) |
 | **Binary Sensors** | Humidity alarm, night mode |
 | **Discovery** | MQTT Auto-Discovery (devices appear automatically in HA) |
 | **Devices** | Supports up to 20 units per installation |
