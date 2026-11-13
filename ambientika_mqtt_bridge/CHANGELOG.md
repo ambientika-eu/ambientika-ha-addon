@@ -12,9 +12,8 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
   gleichmäßig über die Zeit (mit 60 Minuten: halb nach 30, ganz nach 60 Minuten).
   Kombinierbar mit `temperature_avg_hysteresis`. Standard 0 = wie bisher.
 - Das Nacht-Kennzeichen des Geräts heißt in Home Assistant jetzt „Night Mode"
-  mit Mond-Symbol und zeigt An/Aus. Es zeigt, ob das Gerät im Nachtbetrieb läuft
-  (in SMART und AUTO entscheidet der Dämmerungssensor des Zonen-Masters für die
-  ganze Zone). Gleiche Entität, gleiche Entitäts-ID - Automationen bleiben
+  mit Mond-Symbol und zeigt An/Aus: das Nacht-Kennzeichen, das die Cloud im
+  Status des Geräts meldet (jedes Gerät meldet sein eigenes). Gleiche Entität, gleiche Entitäts-ID - Automationen bleiben
   unverändert.
 - Dokumentation: „Light Sensor Level" ist die eingestellte Empfindlichkeit des
   Dämmerungssensors, kein Helligkeitswert.
