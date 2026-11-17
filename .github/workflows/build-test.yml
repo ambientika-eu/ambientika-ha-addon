@@ -1,19 +1,33 @@
 name: Build test
 
-# Builds the add-on image for the supported architectures and checks that the
-# bridge starts its imports. Runs on changes to the image definition.
+# Builds the add-on image for the supported architectures, checks that the
+# bridge starts its imports and then runs the image the way the Supervisor
+# starts it (/data/options.json, run.sh) against a local stand-in for the
+# Ambientika cloud and a real Mosquitto broker. The stand-in and the test
+# driver come from ambientika-eu/ambientika-mqtt-bridge (sim/fake_cloud.py,
+# test_system_sim.py). amd64 runs start, discovery, values, commands, filter
+# reset, broker restart, clean stop, Last Will and configuration; the emulated
+# architectures run the start with discovery and values.
+# Runs on changes to the image, the bridge or the add-on configuration.
 on:
   push:
     paths:
       - "ambientika_mqtt_bridge/Dockerfile"
       - "ambientika_mqtt_bridge/build.json"
       - "ambientika_mqtt_bridge/requirements.txt"
+      - "ambientika_mqtt_bridge/bridge.py"
+      - "ambientika_mqtt_bridge/run.sh"
+      - "ambientika_mqtt_bridge/config.yaml"
       - ".github/workflows/build-test.yml"
   pull_request:
     paths:
       - "ambientika_mqtt_bridge/Dockerfile"
       - "ambientika_mqtt_bridge/build.json"
       - "ambientika_mqtt_bridge/requirements.txt"
+      - "ambientika_mqtt_bridge/bridge.py"
+      - "ambientika_mqtt_bridge/run.sh"
+      - "ambientika_mqtt_bridge/config.yaml"
+      - ".github/workflows/build-test.yml"
   workflow_dispatch:
 
 permissions:
@@ -58,3 +72,31 @@ jobs:
         run: |
           docker image inspect addon-test:${{ matrix.arch }} --format '{{.Size}}' | awk '{printf "Image size: %.0f MB\n", $1/1000000}' | tee -a "$GITHUB_STEP_SUMMARY"
           docker run --rm --platform ${{ matrix.platform }} --entrypoint sh addon-test:${{ matrix.arch }} -c 'command -v gcc cargo || echo "no compiler in image"'
+      - name: Test driver (cloud stand-in and system test of the bridge repository)
+        uses: actions/checkout@v4
+        with:
+          repository: ambientika-eu/ambientika-mqtt-bridge
+          path: bridge-tests
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Mosquitto and the test driver's dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mosquitto
+          sudo systemctl stop mosquitto || true
+          # Ubuntu confines /usr/sbin/mosquitto to /etc/mosquitto and its data
+          # folders; the test starts brokers with their own configuration.
+          sudo cp /usr/sbin/mosquitto /usr/local/bin/mosquitto-test
+          echo "SIM_MOSQUITTO=/usr/local/bin/mosquitto-test" >> "$GITHUB_ENV"
+          python -m pip install --upgrade pip
+          pip install -r bridge-tests/requirements.txt
+      - name: Run the image against the cloud stand-in and a real broker
+        run: |
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            python bridge-tests/test_system_sim.py --addon-image addon-test:amd64 \
+              --addon-config ambientika_mqtt_bridge/config.yaml --only start,commands,broker,config
+          else
+            SIM_TIME_FACTOR=6 python bridge-tests/test_system_sim.py --addon-image addon-test:${{ matrix.arch }} \
+              --addon-config ambientika_mqtt_bridge/config.yaml --only start
+          fi
