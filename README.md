@@ -210,7 +210,7 @@ shows it in the add-on's **Documentation** tab.
 
 This add-on is developed and maintained by **Südwind GmbH**, the manufacturer of Ambientika ventilation systems.
 
-© Südwind GmbH – [www.ambientika.eu](https://www.ambientika.eu)
+© Südwind GmbH (SUEDWIND S.R.L.) – [www.ambientika.eu](https://www.ambientika.eu)
 
 ---
 
