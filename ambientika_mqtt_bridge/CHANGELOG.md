@@ -4,6 +4,8 @@ Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
 ## 1.6.34
+- Einheitliche Versionsnummer: Die Bridge im Repository ambientika-mqtt-bridge
+  trägt ab jetzt dieselbe Nummer wie das Add-on (bisher Bridge 1.4.43).
 - Gesättigter Feuchtesensor: Meldet das Gerät beim Duschen mehr als 100 %
   Luftfeuchte (z. B. 105, 118 oder 141 %), zeigt „Humidity" jetzt 100 %, und der
   Wert zählt als 100 % für „Humidity (averaged)". Automationen auf einen
