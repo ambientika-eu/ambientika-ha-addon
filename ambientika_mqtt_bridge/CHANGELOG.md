@@ -3,6 +3,13 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.35
+- Deutlich kleineres Add-on: Das Image ist jetzt rund 50 MB statt über 1 GB groß.
+  Die Abhängigkeiten werden mit dem Python des Basis-Images installiert, die
+  Compiler nur während der Installation geladen und danach entfernt. Das
+  verkleinert auch die Home-Assistant-Backups. Keine Änderung an Funktion,
+  Optionen oder Entitäten. Danke für den Hinweis und die Analyse.
+
 ## 1.6.34
 - Einheitliche Versionsnummer: Die Bridge im Repository ambientika-mqtt-bridge
   trägt ab jetzt dieselbe Nummer wie das Add-on (bisher Bridge 1.4.43).
