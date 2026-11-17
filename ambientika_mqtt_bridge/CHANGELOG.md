@@ -3,6 +3,18 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.37
+- Das Add-on startet von selbst, sobald Internet, Ambientika-Cloud und MQTT-Broker
+  erreichbar sind. Fehlt beim Start eines davon – etwa nach einem Stromausfall,
+  wenn Home Assistant vor dem Router läuft –, wartet es und versucht es erneut:
+  die Cloud nach 10 Sekunden, dann in längeren Abständen bis fünf Minuten, den
+  Broker bis einmal pro Minute. Der Watchdog des Add-ons ist dafür nicht nötig.
+- Nimmt die Cloud Benutzername und Passwort nicht an, steht das mit einem Hinweis
+  im Protokoll. Das Add-on läuft weiter und versucht die Anmeldung nach einer
+  Minute erneut, danach in wachsenden Abständen bis höchstens alle 30 Minuten –
+  beim Start und im laufenden Betrieb.
+- Keine Änderung an Topics, Optionen oder Entitäten.
+
 ## 1.6.36
 - Zeitlimit für Anfragen an die Ambientika-Cloud: Nahm die Cloud eine Anfrage an
   und antwortete nicht, wartete die Bridge bis zu fünf Minuten. In dieser Zeit
