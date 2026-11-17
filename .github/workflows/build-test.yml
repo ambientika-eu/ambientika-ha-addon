@@ -1,0 +1,60 @@
+name: Build test
+
+# Builds the add-on image for the supported architectures and checks that the
+# bridge starts its imports. Runs on changes to the image definition.
+on:
+  push:
+    paths:
+      - "ambientika_mqtt_bridge/Dockerfile"
+      - "ambientika_mqtt_bridge/build.json"
+      - "ambientika_mqtt_bridge/requirements.txt"
+      - ".github/workflows/build-test.yml"
+  pull_request:
+    paths:
+      - "ambientika_mqtt_bridge/Dockerfile"
+      - "ambientika_mqtt_bridge/build.json"
+      - "ambientika_mqtt_bridge/requirements.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+          - arch: aarch64
+            platform: linux/arm64
+          - arch: armv7
+            platform: linux/arm/v7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Base image
+        id: base
+        run: echo "from=$(jq -r '.build_from["${{ matrix.arch }}"]' ambientika_mqtt_bridge/build.json)" >> "$GITHUB_OUTPUT"
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: ambientika_mqtt_bridge
+          platforms: ${{ matrix.platform }}
+          load: true
+          tags: addon-test:${{ matrix.arch }}
+          build-args: |
+            BUILD_FROM=${{ steps.base.outputs.from }}
+            BUILD_ARCH=${{ matrix.arch }}
+            BUILD_VERSION=test
+      - name: Import check
+        run: |
+          docker run --rm --platform ${{ matrix.platform }} --entrypoint python3 \
+            addon-test:${{ matrix.arch }} -c "import sys; sys.path.insert(0, '/app'); import ambientika_py, aiohttp, paho.mqtt.client, yaml, returns; import bridge; print('imports ok')"
+      - name: Image size
+        run: |
+          docker image inspect addon-test:${{ matrix.arch }} --format '{{.Size}}' | awk '{printf "Image size: %.0f MB\n", $1/1000000}' | tee -a "$GITHUB_STEP_SUMMARY"
+          docker run --rm --platform ${{ matrix.platform }} --entrypoint sh addon-test:${{ matrix.arch }} -c 'command -v gcc cargo || echo "no compiler in image"'

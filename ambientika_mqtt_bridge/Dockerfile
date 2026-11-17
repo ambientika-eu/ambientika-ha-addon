@@ -13,21 +13,18 @@ LABEL \
   io.hass.version="${BUILD_VERSION}" \
   maintainer="Südwind GmbH"
 
-# Install Python plus build tools needed for aiohttp / yarl / multidict on ARM
-RUN apk add --no-cache \
-      python3 \
-      py3-pip \
+# Install the bridge dependencies with the Python of the base image.
+# Compilers are only needed while pip builds wheels (e.g. on armv7/i386) and
+# are removed in the same layer, so the image keeps only the runtime.
+COPY requirements.txt /tmp/requirements.txt
+RUN apk add --no-cache --virtual .build-deps \
       gcc \
       musl-dev \
-      python3-dev \
       libffi-dev \
-      openssl-dev \
-      cargo \
-      make
-
-# Install bridge dependencies (PEP 668: system Python is externally managed)
-COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements.txt
+      make \
+    && pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements.txt \
+    && apk del --no-network .build-deps \
+    && rm -rf /tmp/requirements.txt /root/.cache
 
 # Copy bridge script
 COPY bridge.py /app/bridge.py
