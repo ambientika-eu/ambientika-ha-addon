@@ -3,6 +3,22 @@
 Alle nennenswerten Änderungen dieses Add-ons. Neueste zuerst.
 Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository.
 
+## 1.6.36
+- Zeitlimit für Anfragen an die Ambientika-Cloud: Nahm die Cloud eine Anfrage an
+  und antwortete nicht, wartete die Bridge bis zu fünf Minuten. In dieser Zeit
+  wurden auch alle anderen Geräte nicht abgefragt und zeigten ihre letzten Werte
+  weiter als aktuell. Jetzt endet jede Anfrage nach 20 Sekunden und zählt als
+  fehlgeschlagener Abruf dieses Geräts; die übrigen Geräte werden weiter
+  abgefragt. Das gilt auch für Befehle, den Filter-Reset und den Start.
+- Ruhigeres Protokoll, wenn die Cloud etwas Unlesbares antwortet (z. B. eine
+  Fehlerseite statt Daten): eine Zeile je Abruf bis zur Schwelle, danach die
+  Zusammenfassung je Stunde, statt einer vollen Fehlermeldung bei jedem Abruf.
+- Ist der MQTT-Broker beim Start nicht erreichbar, nennt die Meldung jetzt den
+  Broker mit Adresse und Port statt der Internetverbindung.
+- Das Add-on stoppt auch dann sofort, wenn gerade eine Anfrage an die Cloud
+  offen ist.
+- Keine Änderung an Topics, Optionen oder Entitäten.
+
 ## 1.6.35
 - Deutlich kleineres Add-on: Das Image ist jetzt rund 50 MB statt über 1 GB groß.
   Die Abhängigkeiten werden mit dem Python des Basis-Images installiert, die

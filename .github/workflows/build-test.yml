@@ -5,9 +5,10 @@ name: Build test
 # starts it (/data/options.json, run.sh) against a local stand-in for the
 # Ambientika cloud and a real Mosquitto broker. The stand-in and the test
 # driver come from ambientika-eu/ambientika-mqtt-bridge (sim/fake_cloud.py,
-# test_system_sim.py). amd64 runs start, discovery, values, commands, filter
-# reset, broker restart, clean stop, Last Will and configuration; the emulated
-# architectures run the start with discovery and values.
+# test_system_sim.py). amd64 runs everything - start, discovery, values,
+# commands, filter reset, outages, requests the cloud never answers, broker
+# restart, clean stop, Last Will, start without cloud or broker, configuration;
+# the emulated architectures run the start with discovery and values.
 # Runs on changes to the image, the bridge or the add-on configuration.
 on:
   push:
@@ -95,7 +96,7 @@ jobs:
         run: |
           if [ "${{ matrix.arch }}" = "amd64" ]; then
             python bridge-tests/test_system_sim.py --addon-image addon-test:amd64 \
-              --addon-config ambientika_mqtt_bridge/config.yaml --only start,commands,broker,config
+              --addon-config ambientika_mqtt_bridge/config.yaml
           else
             SIM_TIME_FACTOR=6 python bridge-tests/test_system_sim.py --addon-image addon-test:${{ matrix.arch }} \
               --addon-config ambientika_mqtt_bridge/config.yaml --only start
