@@ -16,23 +16,21 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
 - Keine Änderung an Topics, Optionen oder Entitäten.
 
 ## 1.6.36
-- Zeitlimit für Anfragen an die Ambientika-Cloud: Nahm die Cloud eine Anfrage an
-  und antwortete nicht, wartete die Bridge bis zu fünf Minuten. In dieser Zeit
-  wurden auch alle anderen Geräte nicht abgefragt und zeigten ihre letzten Werte
-  weiter als aktuell. Jetzt endet jede Anfrage nach 20 Sekunden und zählt als
-  fehlgeschlagener Abruf dieses Geräts; die übrigen Geräte werden weiter
-  abgefragt. Das gilt auch für Befehle, den Filter-Reset und den Start.
+- Zeitlimit für Anfragen an die Ambientika-Cloud: Jede Anfrage endet nach
+  20 Sekunden. Bleibt die Antwort aus, zählt das als fehlgeschlagener Abruf
+  dieses Geräts; die übrigen Geräte werden weiter abgefragt. Das gilt auch für
+  Befehle, den Filter-Reset und den Start.
 - Ruhigeres Protokoll, wenn die Cloud etwas Unlesbares antwortet (z. B. eine
   Fehlerseite statt Daten): eine Zeile je Abruf bis zur Schwelle, danach die
-  Zusammenfassung je Stunde, statt einer vollen Fehlermeldung bei jedem Abruf.
-- Ist der MQTT-Broker beim Start nicht erreichbar, nennt die Meldung jetzt den
-  Broker mit Adresse und Port statt der Internetverbindung.
+  Zusammenfassung je Stunde.
+- Ist der MQTT-Broker beim Start nicht erreichbar, nennt die Meldung den
+  Broker mit Adresse und Port.
 - Das Add-on stoppt auch dann sofort, wenn gerade eine Anfrage an die Cloud
   offen ist.
 - Keine Änderung an Topics, Optionen oder Entitäten.
 
 ## 1.6.35
-- Deutlich kleineres Add-on: Das Image ist jetzt rund 50 MB statt über 1 GB groß.
+- Kleineres Add-on-Image: Das Image ist rund 50 MB groß.
   Die Abhängigkeiten werden mit dem Python des Basis-Images installiert, die
   Compiler nur während der Installation geladen und danach entfernt. Das
   verkleinert auch die Home-Assistant-Backups. Keine Änderung an Funktion,
@@ -78,10 +76,9 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
   lesbar, während das Gerät selbst „nicht verfügbar" ist. Topic
   `ambientika/<serial>/diagnostics` (retained, nach jedem Abruf).
 - Protokoll bei einem Gerät, das nicht antwortet: Die ersten Fehlabrufe bis zur
-  Schwelle `availability_failure_threshold` stehen wie bisher einzeln im Log,
-  danach einmal je Stunde eine Zusammenfassung mit Zähler und Beginn des
-  Ausfalls; die Rückkehr nennt die Dauer („answering again after 1063 failed
-  poll(s) since …"). Neun Stunden ohne Strom ergaben bisher 1063 gleiche Zeilen.
+  Schwelle `availability_failure_threshold` stehen einzeln im Log, danach
+  einmal je Stunde eine Zusammenfassung mit Zähler und Beginn des Ausfalls; die
+  Rückkehr nennt die Dauer („answering again after 1063 failed poll(s) since …").
 - Hysterese auch für „Temperature (averaged)" und ein Vorgabewert für alle
   Geräte: Neue Optionen `humidity_avg_hysteresis` (0–10 %-Punkte) und
   `temperature_avg_hysteresis` (0–5 °C) gelten für jedes Gerät; die bisherige
@@ -94,8 +91,8 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
 - Zonen-Topologie im Log: Nach dem ersten Abruf aller Geräte steht je Zone eine
   Zeile mit Master und Slaves samt Rollen („Zone topology - zone 0: Master Flur
   (…); Slaves: Wohnzimmer (…) SlaveEqualMaster, …"), und erneut, sobald sich
-  etwas ändert (Werksreset, Neukopplung in der App). Das ist das Bild, das man
-  sich bisher vor einem Eingriff in der App von Hand notiert hat.
+  etwas ändert (Werksreset, Neukopplung in der App) - das Bild, das man vor
+  einem Eingriff in der App braucht.
 - Filter-Reset am Slave: Der Knopf „Filter zuruecksetzen" und der Sensor
   „Filter Reset Status" tragen jetzt Attribute aus `ambientika/<serial>/reset_info`
   (Rolle, Zonen-Master, ob der Cloud-Reset den eigenen Zähler löscht, ein Hinweis
@@ -135,8 +132,7 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
 - `radon_protection_fan` / `dewpoint_fallback_fan`: Low, Medium oder High; Stufen,
   die das Gerät selbst wählt (Night, Turbo), fallen auf den Standard zurück.
 - Protokoll: Verbindungsprobleme zur Ambientika-Cloud (Timeout, Abbruch) stehen
-  als eine Zeile im Protokoll statt mit vollständigem Fehlerverlauf, auch beim
-  Start ohne Internetverbindung.
+  als eine Zeile im Protokoll, auch beim Start ohne Internetverbindung.
 - Beispielpaket Schlafetage (im Bridge-Repository): Handy-Hinweis, wenn die
   Notlüftung anspringt oder endet.
 - Bridge 1.4.40.
@@ -168,36 +164,31 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
 - Bridge 1.4.38.
 
 ## 1.6.29
-- NeuraCell-X: Die zeitgesteuerte Abluft (TimedExpulsion, 20 Minuten) wird nicht
-  mehr als „Modus davor" gespeichert. Griff der Radon- oder Taupunktschutz ein,
-  während ein Gerät in dieser Abluft lief, stellte die Bridge sie nach dem
-  Schutz wieder her: noch einmal 20 Minuten volle Abluft, und danach fiel das
-  Gerät in den Schutzmodus (Off bzw. Zuluft) zurück statt in seinen normalen
-  Betrieb. Jetzt wird der Modus gespeichert, zu dem die Abluft selbst
-  zurückgekehrt wäre (`last_operating_mode` des Geräts). Meldet das Gerät keinen
-  brauchbaren, bleibt es beim bisherigen Verhalten - mit Hinweis im Log.
-- Eine während des Schutzes angeforderte zeitgesteuerte Abluft wird nicht mehr
-  für später vorgemerkt (sie ist eine Aktion mit Ende, kein Modus), das Log
-  sagt es. Alle anderen Moduswechsel werden wie bisher nach dem Schutz angewandt.
+- NeuraCell-X und zeitgesteuerte Abluft (TimedExpulsion, 20 Minuten): Greift der
+  Radon- oder Taupunktschutz ein, während ein Gerät in dieser Abluft läuft,
+  merkt sich die Bridge als „Modus davor" den Modus, zu dem die Abluft selbst
+  zurückkehrt (`last_operating_mode` des Geräts). Nach dem Schutz läuft das
+  Gerät damit in seinem normalen Betrieb weiter. Meldet das Gerät keinen
+  brauchbaren Modus, merkt sie sich die Abluft selbst - mit Hinweis im Log.
+- Eine während des Schutzes angeforderte zeitgesteuerte Abluft wird nicht für
+  später vorgemerkt (sie ist eine Aktion mit Ende, kein Modus), das Log sagt
+  es. Alle anderen Moduswechsel werden nach dem Schutz angewandt.
 - Bridge 1.4.37.
 
 ## 1.6.28
-- Slave-Filterzähler richtiggestellt (Log und DOCS): Der Hersteller setzt den
-  Filter je Zone nur über den Master zurück - der Reset löscht den Zähler des
-  Masters, ein Slave behält seinen eigenen, und am Gerät selbst gibt es dafür
-  nichts zu drücken (der Filteralarm der Geräte ist nur bei Mastern aktiv).
-  Der bisherige Hinweis „Reset the filter directly at the unit" war falsch.
-  Der einzige Weg, den eigenen Zähler eines Slaves zu löschen, ist ein Reset,
-  solange das Gerät Master ist: in der App vorübergehend als Einzelgerät
-  einrichten, Filter zurücksetzen, wieder als Slave koppeln. Für den Alltag
-  bleibt die Wartungsquittung (`slave_filter_soft_reset`) der einfachere Weg.
+- Slave-Filterzähler (Log und DOCS): Der Filter wird je Zone über den Master
+  zurückgesetzt - der Reset löscht den Zähler des Masters, ein Slave behält
+  seinen eigenen (der Filteralarm der Geräte ist nur bei Mastern aktiv). Den
+  eigenen Zähler eines Slaves löscht ein Reset, solange das Gerät Master ist:
+  in der App vorübergehend als Einzelgerät einrichten, Filter zurücksetzen,
+  wieder als Slave koppeln. Für den Alltag bleibt die Wartungsquittung
+  (`slave_filter_soft_reset`) der einfachere Weg.
 - Bridge 1.4.36 (nur Logtext und Doku, keine Funktionsänderung).
 
 ## 1.6.27
 - Wartungsquittung sichtbar: „Filter Reset Status" zeigt `acknowledged`, solange
   die Quittung eines Slaves gilt - auch nach einem Neustart oder Update des
-  Add-ons (bisher stand dort danach `idle`, obwohl die Quittung weiter galt),
-  und fällt auf `idle` zurück, sobald sie endet. Mit `slave_filter_soft_reset`
+  Add-ons -, und fällt auf `idle` zurück, sobald sie endet. Mit `slave_filter_soft_reset`
   hat jedes Gerät zwei neue Diagnose-Sensoren „Filter Acknowledged Since" und
   „Filter Acknowledgement Valid Until" (`filter_ack_since` / `filter_ack_until`
   im Status): wann die Quittung gesetzt wurde und bis wann sie gilt. Der Tag,
@@ -218,10 +209,9 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
 - Dokumentation: Die Optionstabellen in README und DOCS führen jetzt alle
   Optionen auf - NeuraCell-X (Radon), den Taupunkt-Block, `average_window_min`
   und `average_window_devices` -, mit Standardwert und Erklärung. Die
-  Funktionsübersicht in der README nennt die Entitäten, die es wirklich gibt
-  (statt „Filter alarm", „defrost", „power consumption"), und der Sensor für die
-  laufende Funktion im SMART-Modus heißt in der Doku wie in Home Assistant
-  „Last Mode".
+  Funktionsübersicht in der README nennt die Entitäten des Add-ons, und der
+  Sensor für die laufende Funktion im SMART-Modus heißt in der Doku wie in
+  Home Assistant „Last Mode".
 - Bridge 1.4.35.
 
 ## 1.6.26
@@ -274,67 +264,59 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
   daneben in den neuen Sensoren „Mode raw" und „Mode raw (num)". Master werden je
   Durchlauf zuerst abgefragt. Unter NeuraCell-X-Schutz oder wenn der Master länger
   nicht gelesen wurde, wird der eigene Wert gezeigt. Weicht der eigene Wert ab,
-  steht das einmal je Änderung im Log. Der Master einer Zone wird nur noch im
-  selben Haus gesucht (mehrere Häuser im Konto haben jeweils eine Zone 0), und
+  steht das einmal je Änderung im Log. Der Master einer Zone wird im selben
+  Haus gesucht (mehrere Häuser im Konto haben jeweils eine Zone 0), und
   die Rollen kommen aus dem Status, den jedes Gerät selbst meldet: Umkoppeln
   oder Zurücksetzen in der App wird ohne Neustart nachvollzogen, ein
   zurückgesetztes Gerät mit altem Zonen-Index ist kein Slave. Für Automationen:
   „Mode" und „Mode (num)" eines Slaves folgen jetzt dem Master; ein auf dem
   Slave gewählter Modus geht weiterhin an dieses Gerät, die Anzeige zeigt beim
   nächsten Abruf wieder den Master - Modi gehören auf den Master.
-- Korrektur zu 1.6.22: Behält ein Slave einen anderen Modus als sein Master, ist
-  das kein Zeichen einer unterbrochenen Verbindung. Die Warnung nach einem
-  Moduswechsel sagt das nicht mehr.
-- Unplausible Messwerte werden nicht mehr veröffentlicht. Feuchte außerhalb
-  1-100 % und Temperatur außerhalb -40 bis 85 °C fallen weg, ebenso ein einzelner
-  Sturz der Feuchte unter 20 %, wenn kurz davor keine trockene Luft gemessen
-  wurde (z. B. 6 % zwischen 55 und 70 %). Anstiege, Duschspitzen und der
+- Warnung nach einem Moduswechsel bei einem Slave: Sie nennt den Master der
+  Zone; ein anderer Modus als der des Masters ist kein Zeichen einer
+  unterbrochenen Verbindung.
+- Messwerte werden auf Plausibilität geprüft, bevor sie veröffentlicht werden:
+  Feuchte außerhalb 1-100 % und Temperatur außerhalb -40 bis 85 °C fallen weg,
+  ebenso ein einzelner Sturz der Feuchte unter 20 %, wenn kurz davor keine
+  trockene Luft gemessen wurde (z. B. 6 % zwischen 55 und 70 %). Anstiege,
+  Duschspitzen und der
   Wechseltakt bleiben unberührt; bei trockener Winterluft wird nur der erste
   trockene Wert nach einer langen feuchten Phase um einen Abruf verzögert. Ein
   innerhalb von zwei Minuten mehrfach gelesenes Statuspaket (die Cloud hält das
   letzte Paket des Geräts) zählt nicht als neue Messung. Solange wird der letzte plausible Wert gezeigt,
   höchstens zehn Minuten, danach „unbekannt". Beides steht einmal im Log,
   bei einem flatternden Sensor höchstens einmal pro Stunde. Danke für den
-  Hinweis auf das Minimum von 6 %.
-- Wartungsquittung: Der wirksame Filterstatus wird sofort veröffentlicht, nicht
-  erst beim nächsten Abruf - Logzeile und Anzeige stimmen damit überein. Lässt
-  sich die Quittung nicht speichern, meldet die Bridge das als Warnung und
-  „unconfirmed" statt „acknowledged".
+  Hinweis.
+- Wartungsquittung: Der wirksame Filterstatus wird sofort veröffentlicht -
+  Logzeile und Anzeige stimmen damit überein. Lässt sich die Quittung nicht
+  speichern, meldet die Bridge das als Warnung und „unconfirmed".
 - Bridge 1.4.32.
 
 ## 1.6.23
-- Nachkontrolle zu 1.6.22. „Dauerhaft grün" heißt für die Wartungsquittung jetzt:
-  mindestens zehn Abrufe in Folge und mindestens zehn Minuten. Zehn Abrufe allein
-  waren bei einem Abrufintervall von 10 s nur 100 s — ein neu startender Slave, der
-  kurz einen Standardstatus meldet, hätte die Quittung weiter löschen können.
-- Die Modusprüfung nach einem Befehl ist vom Statusabruf getrennt: Ein Fehler darin
-  kann nie als fehlgeschlagener Abruf zählen oder den Status unterdrücken.
-- Zusätzlicher Test durch den echten Abrufpfad mit dem gemeldeten Fall (ein einzelner
-  unbekannter Filterwert zwischen lauter „Bad"): Die Quittung bleibt, der Status bleibt
-  grün. Auf dem alten Stand nachgestellt war sie danach weg.
+- „Dauerhaft grün" heißt für die Wartungsquittung: mindestens zehn Abrufe in Folge
+  und mindestens zehn Minuten - unabhängig vom Abrufintervall. Ein neu startender
+  Slave, der kurz einen Standardstatus meldet, lässt die Quittung stehen.
+- Die Modusprüfung nach einem Befehl ist vom Statusabruf getrennt und zählt nicht
+  als Abruf.
+- Zusätzlicher Test durch den echten Abrufpfad (ein einzelner unbekannter
+  Filterwert zwischen lauter „Bad"): Die Quittung bleibt, der Status bleibt grün.
 
 ## 1.6.22
-- Die Wartungsquittung für Slave-Einheiten („slave_filter_soft_reset") verschwindet
-  nicht mehr vorzeitig. Bisher genügte ein einziger Abruf, in dem das Gerät einen
-  unbekannten oder kurz grünen Filterwert meldete, und die Quittung war endgültig
-  gelöscht — ohne Eintrag im Log. So konnte sie nach wenigen Wochen statt nach 90 Tagen
-  weg sein. Jetzt endet sie nur noch, wenn „filter_ack_ttl_days" abgelaufen ist oder
-  das Gerät selbst zehn Abrufe in Folge „Good" meldet (Filter direkt am Gerät
-  zurückgesetzt). Beides steht mit Grund im Log. Ein unbekannter Wert lässt die
-  Quittung stehen und wird einmal protokolliert. Eine bereits verschwundene Quittung
-  bitte einmal neu setzen.
-- Moduswechsel werden nachgeprüft. „change_mode OK" hieß bisher nur, dass die Cloud
-  den Aufruf angenommen hat, nicht dass das Gerät umgeschaltet hat. Die Zeile lautet
-  jetzt „change_mode OK … (accepted by the cloud)". Die Bridge beobachtet die folgenden
-  Abrufe und meldet „operating mode … confirmed", sobald das Gerät den Modus zeigt,
-  oder nach drei Minuten eine Warnung mit dem tatsächlichen Modus. Bei einem Slave
-  nennt die Warnung den Master der Zone: Ein Slave übernimmt seinen Modus über das
-  WLAN vom Master, der Modus gehört deshalb an den Master. Behält ein Slave einen
-  anderen Modus als sein Master, ist seine Verbindung zum Master unterbrochen.
-- Übernommen aus der Bridge (1.4.22 bis 1.4.29), bisher nur im Hauptrepository:
-  - Lüfterstufen „Night" und „Turbo", die das Gerät selbst wählt, werden nie mehr an
-    die Cloud zurückgeschickt. Ein Moduswechsel bei einem Gerät auf „Turbo" endete
-    bisher mit „HTTP 500 … unsigned byte".
+- Wartungsquittung für Slave-Einheiten („slave_filter_soft_reset"): Sie endet, wenn
+  „filter_ack_ttl_days" abgelaufen ist oder das Gerät selbst zehn Abrufe in Folge
+  „Good" meldet (Zähler am Gerät gelöscht). Beides steht mit Grund im Log. Ein
+  unbekannter Wert lässt die Quittung stehen und wird einmal protokolliert.
+- Moduswechsel werden nachgeprüft. Die Zeile nach einem Befehl lautet
+  „change_mode OK … (accepted by the cloud)": Die Cloud hat den Aufruf angenommen.
+  Die Bridge beobachtet die folgenden Abrufe und meldet „operating mode … confirmed",
+  sobald das Gerät den Modus zeigt, oder nach drei Minuten eine Warnung mit dem
+  tatsächlichen Modus. Bei einem Slave nennt die Warnung den Master der Zone: Ein
+  Slave übernimmt seinen Modus über das WLAN vom Master, der Modus gehört deshalb
+  an den Master.
+- Übernommen aus der Bridge (1.4.22 bis 1.4.29):
+  - Lüfterstufen „Night" und „Turbo", die das Gerät selbst wählt, werden nicht an
+    die Cloud zurückgeschickt; ein Moduswechsel funktioniert damit auch bei einem
+    Gerät auf „Turbo".
   - NeuraCell-X: Radon hat Vorrang vor der Taupunktsperre, Rückkehr in den vorherigen
     Modus übersteht Neustart und Update, Befehle und Schutzwechsel laufen je Gerät
     nacheinander.
@@ -352,47 +334,37 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
 - Die Installationsanleitung nannte den Menüpunkt „Einstellungen → Add-ons → Add-on Store". Home Assistant hat ihn mit Version 2026.2 umbenannt: Er heißt dort „Apps", und der Store öffnet sich über die Schaltfläche zum Installieren auf dieser Seite. README und Dokumentation nennen jetzt den aktuellen Weg und den alten in Klammern. Danke für den Hinweis.
 
 ## 1.6.20
-- Temperatur und Luftfeuchte werden jetzt als Messwerte gemeldet
+- Temperatur und Luftfeuchte werden als Messwerte gemeldet
   („state_class: measurement"). Home Assistant legt damit eine Langzeitstatistik
-  an. Bisher fehlte diese Angabe, die Werte verschwanden mit der
-  Recorder-Aufbewahrung nach rund zehn Tagen und ließen sich weder im
-  Statistik-Diagramm noch über die Heizperiode auswerten.
-- Die beiden Passwortfelder in den Add-on-Optionen sind jetzt als Passwort
-  deklariert. Home Assistant stellt sie damit verdeckt dar, statt sie wie bisher
-  im Klartext anzuzeigen.
+  an; die Werte lassen sich im Statistik-Diagramm und über die Heizperiode
+  auswerten.
+- Die beiden Passwortfelder in den Add-on-Optionen sind als Passwort deklariert.
+  Home Assistant stellt sie damit verdeckt dar.
 
 ## 1.6.19
 - Das Sammelfenster für Kommandos lässt sich jetzt in den Add-on-Optionen
   einstellen: „command_coalesce_ms", Standard 800 Millisekunden, 0 führt jedes
-  Kommando sofort aus. Bisher war es nur über eine Umgebungsvariable erreichbar
-  und damit im Add-on gar nicht änderbar — wen die knappe Sekunde Verzögerung
-  beim Schalten stört, der hatte keine Möglichkeit.
-- Die README im Wurzelverzeichnis des Repositories führte den MQTT-Benutzer
-  weiterhin als „optional" und kannte drei Optionen nicht. Sie ist jetzt auf
-  demselben Stand wie die Dokumentation im Add-on.
+  Kommando sofort aus.
+- Die README im Wurzelverzeichnis des Repositories ist auf demselben Stand wie
+  die Dokumentation im Add-on.
 
 ## 1.6.18
-- Neue Datei DOCS.md: Home Assistant zeigt im Reiter „Dokumentation" ausschließlich
-  diese Datei an. Bisher gab es nur eine README.md, die der Supervisor dort nicht
-  darstellt — im Add-on selbst stand also gar keine Anleitung. Die neue Datei nennt
-  die Voraussetzungen, erklärt die Zugangsdaten und beschreibt alle Optionen.
-- Klarstellung: Die einzutragenden Zugangsdaten sind dieselbe E-Mail-Adresse und
-  dasselbe Passwort wie in der Ambientika-App. Ein eigenes Konto für die Bridge
-  gibt es nicht. Die Fehlermeldung sagt das jetzt auch selbst.
-- MQTT-Fehler werden im Klartext gemeldet statt nur als Zahl. „rc=5" heißt, dass
-  der Broker die Anmeldung abgelehnt hat, und verweist auf mqtt_username und
-  mqtt_password — das offizielle Mosquitto-Add-on lässt keine anonymen
-  Verbindungen zu. Die Optionsbeschreibung nannte diese Felder bisher „optional",
-  was für Mosquitto nicht zutrifft.
+- Neue Datei DOCS.md: Home Assistant zeigt sie im Reiter „Dokumentation" des
+  Add-ons an. Sie nennt die Voraussetzungen, erklärt die Zugangsdaten und
+  beschreibt alle Optionen.
+- Zugangsdaten: Einzutragen sind dieselbe E-Mail-Adresse und dasselbe Passwort
+  wie in der Ambientika-App. Ein eigenes Konto für die Bridge gibt es nicht. Die
+  Meldung bei fehlenden Zugangsdaten sagt das auch selbst.
+- Meldungen zur MQTT-Verbindung stehen im Klartext. „rc=5" heißt, dass der Broker
+  die Anmeldung abgelehnt hat, und verweist auf mqtt_username und mqtt_password —
+  das offizielle Mosquitto-Add-on lässt keine anonymen Verbindungen zu. Die
+  Optionsbeschreibung führt diese Felder für Mosquitto als erforderlich.
 
 ## 1.6.17
-- Mehrere Einstellungen in einer Automation funktionieren jetzt. Bisher füllte
-  jedes Kommando die Attribute, die es nicht selbst setzt, aus dem gerade
-  gelesenen Cloud-Status — und die Cloud kannte die eben gesendete Änderung noch
-  nicht. Wer Modus und Lüfterstufe nacheinander setzte, bei dem schrieb das
-  zweite Kommando den alten Modus zurück. Kommandos für dasselbe Gerät werden
-  jetzt innerhalb eines kurzen Fensters gesammelt und in einem einzigen Aufruf
-  angewandt. Das halbiert nebenbei die Cloud-Aufrufe.
+- Mehrere Einstellungen in einer Automation: Kommandos für dasselbe Gerät werden
+  innerhalb eines kurzen Fensters gesammelt und in einem einzigen Aufruf
+  angewandt. Eine Automation kann damit Modus und Lüfterstufe direkt
+  nacheinander setzen; nebenbei halbieren sich die Cloud-Aufrufe.
 - Neues Kommando-Topic „<prefix>/<seriennummer>/set" nimmt ein JSON-Objekt mit
   mehreren Attributen entgegen, zum Beispiel
   {"operating_mode": "MasterSlaveFlow", "fan_speed": "High"}. Die Kurznamen
@@ -401,70 +373,61 @@ Ausführliche technische Hinweise stehen unter „Releases" im GitHub-Repository
   Schlüssel wird mit einer Meldung übersprungen.
 - Das Sammelfenster lässt sich über die Umgebungsvariable COMMAND_COALESCE_MS
   einstellen (Standard 800 Millisekunden, 0 schaltet es ab).
-- Die MQTT-Dokumentation im Projekt-README beschrieb Topics und Nutzlasten, die
-  es so nie gab. Sie ist jetzt aus dem laufenden Betrieb heraus korrigiert.
+- Die MQTT-Dokumentation im Projekt-README ist neu geschrieben, samt
+  vollständiger Liste der erlaubten Werte.
 
 ## 1.6.16
-- Die Wartungsquittung wirkt jetzt auch auf den Text-Sensor „Filter Status". Bisher
-  meldete er weiterhin „Bad", während die Zahlenwerte bereits grün waren — wer den
-  lesbaren Klartext im Dashboard nutzt, sah die Quittung also nicht. Die Hauptfelder
-  „filters_status" und „filter_status_num" zeigen nun beide den quittierten Wert.
+- Die Wartungsquittung wirkt auch auf den Text-Sensor „Filter Status". Die Hauptfelder
+  „filters_status" und „filter_status_num" zeigen beide den quittierten Wert.
 - Neuer Sensor „Filter Status raw" (`filters_status_raw`) mit dem unveränderten
   Gerätewert als Text — passend zum bereits vorhandenen `filter_status_raw_num`.
   Bei ausgeschalteter Quittung, also im Standard, sind Haupt- und Rohwert identisch.
-- Der Diagnosesensor „Filter Reset Status" kennt den eigenen Zustand „acknowledged".
-  Bisher stand dort nach einer Quittung „unconfirmed", was neben einer grünen Anzeige
-  widersprüchlich wirkte. „unconfirmed" bedeutet jetzt wieder das, was es sagt: der
-  Reset ist weder durchgekommen noch vermerkt worden.
+- Der Diagnosesensor „Filter Reset Status" kennt den eigenen Zustand „acknowledged":
+  die Wartung wurde bridge-seitig vermerkt. „unconfirmed" bedeutet: der Reset ist
+  weder durchgekommen noch vermerkt worden.
 
 ## 1.6.15
-- Filter-Reset greift jetzt auch bei Filterstatus „Medium" (gelb). Bisher stieg
-  die Bridge bei allem außer Rot vorzeitig aus und meldete „nothing to do", ohne
-  überhaupt einen Reset zu senden — wer den Filter vor dem Alarm reinigt, drückte
-  ins Leere. Übersprungen wird nur noch ein Zähler, der bereits auf „Good" steht.
-- Die Erfolgsprüfung misst jetzt die tatsächliche Verbesserung des Zählers statt
-  nur „nicht mehr rot". Ein Reset aus „Medium" heraus wird dadurch nicht mehr
-  fälschlich als bestätigt gemeldet, wenn sich nichts bewegt hat.
+- Filter-Reset greift jetzt auch bei Filterstatus „Medium" (gelb), also wenn der
+  Filter vor dem Alarm gereinigt wird. Übersprungen wird nur ein Zähler, der
+  bereits auf „Good" steht.
+- Als bestätigt gilt ein Reset, wenn sich der Zähler tatsächlich verbessert hat.
+  Bewegt er sich nicht, lautet der Zustand „unconfirmed".
 - Die Wartungsquittung für Slave-Einheiten gilt entsprechend für jeden fälligen
   Zähler, also für Gelb wie für Rot.
 
 ## 1.6.14
-- Filter-Reset meldet bei Slave-Einheiten jetzt den tatsächlichen Sachverhalt: Der Zähler
-  einer Slave-Einheit lässt sich über die Cloud nicht löschen, weil die Rückstellung vom
-  Master der Zone ausgeführt wird und nur dessen eigenen Zähler betrifft. Statt auf einen
-  späteren Poll zu vertrösten, weist die Bridge im Klartext darauf hin, dass die Rückstellung
-  direkt an der Einheit nötig ist. Bei Master- und Einzelgeräten wird der Erfolg weiterhin
-  am echten Gerätestatus geprüft.
+- Filter-Reset bei Slave-Einheiten: Die Rückstellung wird vom Master der Zone ausgeführt
+  und betrifft dessen eigenen Zähler; jeder Slave führt daneben einen eigenen. Bei einem
+  Reset an einem Slave weist die Bridge im Klartext darauf hin. Bei Master- und
+  Einzelgeräten wird der Erfolg weiterhin am echten Gerätestatus geprüft.
 - Neue Option „slave_filter_soft_reset" (Standard: aus): Ist sie aktiv, vermerkt die Bridge
   einen Reset an einer Slave-Einheit als Wartungsquittung. `filter_status_num` zeigt die
   gewartete Einheit dann wieder grün, während der rohe Gerätewert unverändert bleibt und
   weiterhin unter `filters_status` sowie im neuen Feld `filter_status_raw_num` sichtbar ist.
-  Damit lösen Warnregeln wieder korrekt aus, ohne dass eine gewartete Einheit dauerhaft auf
-  Rot hängt.
+  Warnregeln können damit auf dem effektiven Wert arbeiten.
 - Neue Option „filter_ack_ttl_days" (Standard: 90): Gültigkeitsdauer der Wartungsquittung
   in Tagen.
 
 ## 1.6.13
-Behebt einen Ausfall im Dauerbetrieb: Nach dem Token-Refresh (etwa alle sechs Stunden) stellte die Bridge das Polling dauerhaft ein. Beim Re-Auth werden die Geräte jetzt wieder korrekt mit dem frischen Cloud-Token verbunden, sodass das Polling nahtlos weiterläuft.
+Nahtloser Abruf über den Token-Refresh hinweg: Nach dem automatischen Token-Refresh (etwa alle sechs Stunden im Dauerbetrieb) werden die Geräte mit dem frischen Cloud-Token verbunden, sodass der Abruf nahtlos weiterläuft.
 
 ## 1.6.12
-Helligkeits-/Dämmerungssensor bleibt beim Aus- und Wiedereinschalten über Home Assistant erhalten (vorher sprang er auf „Medium" zurück, statt die Voreinstellung wie „Off" zu behalten). Interne Korrektur: die NeuraCell-X-Moduswiederherstellung sendet den Helligkeitswert wieder korrekt mit.
+Helligkeits-/Dämmerungssensor bleibt beim Aus- und Wiedereinschalten über Home Assistant erhalten, zum Beispiel die Voreinstellung „Off". Auch die NeuraCell-X-Moduswiederherstellung sendet den Helligkeitswert mit.
 
 ## 1.6.11
-- Luftqualitäts-Zahlenwert (`air_quality_num`) auf die saubere fünfstufige
-  Geräteskala gebracht: VeryGood = 4, Good = 3, Medium = 2, Poor = 1, Bad = 0.
+- Der Luftqualitäts-Zahlenwert (`air_quality_num`) folgt der fünfstufigen
+  Geräteskala: VeryGood = 4, Good = 3, Medium = 2, Poor = 1, Bad = 0.
   Damit sind Langzeitstatistik und Diagramme über den gesamten Bereich eindeutig.
 
 ## 1.6.10
-- Filter-Reset vereinfacht und beruhigt: Das dokumentierte Reset-Kommando wird
-  einmalig an das Gerät und den Master seiner Zone gesendet, der Status danach
-  einmal nachgelesen – ohne wiederholte Versuche und ohne Log-Rauschen.
+- Filter-Reset: Das dokumentierte Reset-Kommando wird einmalig an das Gerät und
+  den Master seiner Zone gesendet, der Status danach einmal nachgelesen.
 - Neuer Diagnosesensor „Filter Reset Status" (standardmäßig ausgeblendet,
   bei Bedarf für Fortgeschrittene einblendbar).
 
 ## 1.6.8
 - Automatische Token-Auffrischung: Läuft das Cloud-Token ab, erneuert die Bridge
-  es selbst – Geräte werden nicht mehr bis zum nächsten Neustart „nicht verfügbar".
+  es selbst – die Geräte bleiben verfügbar.
 - Neuer Sensor „Ambientika Bridge (online/offline)" samt Last-Will: Ein Ausfall
   des Add-ons ist sofort in Home Assistant sichtbar.
 - Robusterer MQTT-Reconnect; ein laufender Filter-Reset übersteht einen Neustart.
@@ -478,8 +441,8 @@ Helligkeits-/Dämmerungssensor bleibt beim Aus- und Wiedereinschalten über Home
   je Textwert (Langzeitstatistik/Grafana ohne eigene Übersetzungstabelle),
   Filter-Reset-Taste, Zonen-Index sowie NeuraCell-X Radon- und Taupunktquellen
   direkt aus der Cloud.
-- Fix: Nachtstufe („Night") wird korrekt verarbeitet – keine Lücken mehr in den
-  Messreihen, wenn ein Gerät im Nachtbetrieb läuft.
+- Lüfterstufe „Night": Ein Gerät im Nachtbetrieb wird gelesen und lässt sich
+  steuern wie jedes andere; die Messreihen laufen durch.
 - Verfügbarkeits-Entprellung: kein Flackern auf „nicht verfügbar" bei einem
   einzelnen fehlgeschlagenen Poll (Standard: 3 Fehlversuche in Folge).
 
